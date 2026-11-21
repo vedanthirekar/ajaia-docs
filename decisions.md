@@ -64,3 +64,16 @@ Format: **D-### · Date · Title**. Decision / Options / Rationale / Tradeoff.
 - **Decision:** Next.js 16's default `cacheComponents` / `partialPrefetching` are disabled. Auth.js uses JWT sessions. OAuth emails are normalized (lowercased) through a thin adapter wrapper.
 - **Rationale:** Every page is per-user and rendered at request time, so caching adds build constraints and no benefit. The Credentials provider requires JWT sessions. Normalizing emails keeps share-by-email matching reliable across both login methods.
 - **Tradeoff:** JWT sessions can't be revoked server-side before they expire. That's acceptable at this scope, and authorization is still re-checked against the database on every request.
+
+### D-012 · 2026-11-21 · Embedded Postgres (PGlite) for local dev and tests
+- **Decision:** `DATABASE_URL=pglite:<dir>` runs a file-backed embedded Postgres locally. Tests use an in-memory PGlite per test with the real migrations. Production uses Neon.
+- **Rationale:** Reviewers can run the app with no database install, and tests exercise real SQL (constraints, cascades, conditional updates) with no mocks or Docker.
+- **Tradeoff:** PGlite is single-process. Next dev loads route handlers and pages as separate module copies, so the instance is kept as a process-wide singleton. It isn't used in production.
+
+### D-013 · 2026-11-21 · E2E runs on the installed Chrome
+- **Decision:** Playwright uses `channel: "chrome"` by default (`PW_CHANNEL=chromium` switches to the bundled browser) and an isolated throwaway DB on port 3100.
+- **Rationale:** No ~150 MB browser download is needed locally (the dev machine's system drive was nearly full). The E2E test never touches dev data.
+
+### D-014 · 2026-11-21 · Migrations are applied manually before deploy
+- **Decision:** `npm run db:migrate` runs explicitly against the production database rather than as part of the Vercel build.
+- **Rationale:** Schema changes stay a deliberate step, and preview builds can't migrate the production DB by accident.
