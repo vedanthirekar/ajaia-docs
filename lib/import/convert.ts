@@ -6,8 +6,9 @@ import { editorExtensions } from "../editor/extensions";
 import { AppError } from "../errors";
 import { MAX_CONTENT_CHARS } from "../validation";
 
-export const MAX_IMPORT_BYTES = 4 * 1024 * 1024;
-export const SUPPORTED_EXTENSIONS = [".txt", ".md", ".docx"] as const;
+import { MAX_IMPORT_BYTES, SUPPORTED_EXTENSIONS } from "./constants";
+
+export { MAX_IMPORT_BYTES, SUPPORTED_EXTENSIONS };
 type Ext = (typeof SUPPORTED_EXTENSIONS)[number];
 
 const escapeHtml = (s: string) =>
