@@ -59,3 +59,8 @@ Format: **D-### · Date · Title**. Decision / Options / Rationale / Tradeoff.
 ### D-010 · 2026-11-21 · Testing strategy
 - **Decision:** Vitest unit tests for the permission matrix, import conversion, version conflicts and validators. One Playwright E2E test for the share flow.
 - **Rationale:** Tests target the logic where bugs would matter most: access control and data integrity.
+
+### D-011 · 2026-11-21 · Framework config and session details
+- **Decision:** Next.js 16's default `cacheComponents` / `partialPrefetching` are disabled. Auth.js uses JWT sessions. OAuth emails are normalized (lowercased) through a thin adapter wrapper.
+- **Rationale:** Every page is per-user and rendered at request time, so caching adds build constraints and no benefit. The Credentials provider requires JWT sessions. Normalizing emails keeps share-by-email matching reliable across both login methods.
+- **Tradeoff:** JWT sessions can't be revoked server-side before they expire. That's acceptable at this scope, and authorization is still re-checked against the database on every request.
