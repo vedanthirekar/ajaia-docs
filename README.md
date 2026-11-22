@@ -106,3 +106,10 @@ To run against real Postgres (e.g. Neon) instead, set `DATABASE_URL=postgresql:/
 - **No email verification**, so a pending invite goes to whoever first registers that email address. That's fine for a demo; in production, verify emails before granting invite access.
 - If you signed up with a password, "Continue with Google" with the same email is refused (sign in with your password). Accounts are deliberately not auto-linked; see ARCHITECTURE.md › Auth.
 - Sessions are JWT-based, so signing out elsewhere doesn't revoke an existing session before it expires. Every request is still re-authorized against the database.
+
+---
+
+## Credits
+
+- Logo and favicon: "Document" icon by [Icons8](https://icons8.com) (free licence with attribution).
+- Visual theme ("Cotton"): `design-handoff/` (spec, tokens and mockups).

@@ -1,0 +1,61 @@
+/*
+ * Ajaia Docs · "Cotton" theme tokens (source: design-handoff/tokens.css).
+ *
+ * Every token is prefixed `--cotton-` because shadcn/ui already defines
+ * `--border`, `--muted`, etc. with different meanings (shadcn's `--muted` is a
+ * background; the spec's `--muted` is a text colour). globals.css maps shadcn's
+ * semantic variables onto these and exposes them as Tailwind utilities.
+ *
+ *   spec name      → here
+ *   --bg           → --cotton-bg          --ink        → --cotton-ink
+ *   --surface      → --cotton-surface     --ink-2      → --cotton-ink-2
+ *   --page         → --cotton-page        --muted      → --cotton-muted
+ *   --backdrop     → --cotton-backdrop    --line       → --cotton-line
+ *   --border       → --cotton-border      …and so on, one-to-one.
+ */
+:root {
+  /* Surfaces */
+  --cotton-bg: #fbf7ef; /* app background, warm cream */
+  --cotton-surface: #fffdf8; /* header, cards, dialogs */
+  --cotton-page: #ffffff; /* the document page in the editor */
+  --cotton-backdrop: #efe9dd; /* behind modals */
+
+  /* Ink */
+  --cotton-ink: #2b2a3a; /* text, outlines, primary button */
+  --cotton-ink-2: #4a4657; /* secondary text, icons */
+  --cotton-muted: #6a6577; /* meta text, placeholders */
+
+  /* Lines */
+  --cotton-line: #ece5d8; /* dividers */
+  --cotton-border: #e2dacb; /* inputs, toolbar, chips */
+  --cotton-card-border: #e6dfd1; /* cards */
+  --cotton-dashed: #c9c0ae; /* "Blank document" tile, drop zones */
+
+  /* Pastels (the "cotton" fills) */
+  --cotton-sky: #cfe6f7; /* main accent: offset shadow, avatar, active tool */
+  --cotton-blush: #f7d3cf;
+  --cotton-butter: #ffe7a3; /* text highlight */
+  --cotton-mint: #cdebd9;
+
+  /* Lighter pastels for card thumbnails */
+  --cotton-sky-soft: #dcedf9;
+  --cotton-blush-soft: #fbe2df;
+  --cotton-butter-soft: #fff0c7;
+  --cotton-mint-soft: #dbf0e3;
+
+  /* Status */
+  --cotton-saved: #3e9b6a;
+  --cotton-cursor: #d9786c;
+
+  /* Radius */
+  --cotton-r-sm: 6px;
+  --cotton-r-md: 10px; /* buttons, inputs */
+  --cotton-r-lg: 14px; /* cards */
+  --cotton-r-xl: 16px; /* dialogs */
+  --cotton-r-pill: 999px;
+
+  /* Signature "cotton" offset shadow: solid pastel, no blur */
+  --cotton-offset-sm: 2px 2px 0 var(--cotton-sky);
+  --cotton-offset-md: 3px 3px 0 var(--cotton-sky);
+  --cotton-offset-lg: 5px 5px 0 var(--cotton-sky);
+}

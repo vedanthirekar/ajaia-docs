@@ -1,0 +1,51 @@
+/* Ajaia Docs · Cotton (pastel) theme tokens */
+:root {
+  /* Surfaces */
+  --bg: #FBF7EF;            /* app background, warm cream */
+  --surface: #FFFDF8;       /* header, cards, dialogs */
+  --page: #FFFFFF;          /* the document page in the editor */
+  --backdrop: #EFE9DD;      /* behind modals */
+
+  /* Ink */
+  --ink: #2B2A3A;           /* text, outlines, primary button */
+  --ink-2: #4A4657;         /* secondary text, icons */
+  --muted: #6A6577;         /* meta text, placeholders */
+
+  /* Lines */
+  --line: #ECE5D8;          /* dividers */
+  --border: #E2DACB;        /* inputs, toolbar, chips */
+  --card-border: #E6DFD1;   /* cards */
+  --dashed: #C9C0AE;        /* "Blank document" tile, drop zones */
+
+  /* Pastels (the "cotton" fills) */
+  --sky: #CFE6F7;           /* main accent: offset shadow, avatar, active tool */
+  --blush: #F7D3CF;
+  --butter: #FFE7A3;        /* text highlight */
+  --mint: #CDEBD9;
+
+  /* Lighter pastels for card thumbnails */
+  --sky-soft: #DCEDF9;
+  --blush-soft: #FBE2DF;
+  --butter-soft: #FFF0C7;
+  --mint-soft: #DBF0E3;
+
+  /* Status */
+  --saved: #3E9B6A;
+  --cursor: #D9786C;
+
+  /* Type */
+  --font-ui: "Inter", system-ui, sans-serif;
+  --font-display: "Newsreader", Georgia, serif;
+
+  /* Radius */
+  --r-sm: 6px;
+  --r-md: 10px;   /* buttons, inputs */
+  --r-lg: 14px;   /* cards */
+  --r-xl: 16px;   /* dialogs */
+  --r-pill: 999px;
+
+  /* Signature "cotton" offset shadow: solid pastel, no blur */
+  --offset-sm: 2px 2px 0 var(--sky);
+  --offset-md: 3px 3px 0 var(--sky);
+  --offset-lg: 5px 5px 0 var(--sky);
+}

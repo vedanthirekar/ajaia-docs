@@ -1,31 +1,33 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { Plus } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { apiFetch, ApiError } from "@/lib/client/api";
+import { useCreateDocument } from "./useCreateDocument";
 
 export function NewDocButton() {
-  const router = useRouter();
-  const [pending, setPending] = useState(false);
-
-  async function create() {
-    setPending(true);
-    try {
-      const doc = await apiFetch<{ id: string }>("/api/documents", { method: "POST" });
-      router.push(`/documents/${doc.id}`);
-    } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Couldn't create a document");
-      setPending(false);
-    }
-  }
-
+  const { create, pending } = useCreateDocument();
   return (
-    <Button onClick={create} disabled={pending} size="lg">
-      <Plus />
+    <Button variant="primary" size="cta" onClick={create} disabled={pending}>
+      <Plus strokeWidth={2} />
       {pending ? "Creating…" : "New document"}
     </Button>
+  );
+}
+
+/** Dashed "Blank document" tile at the start of the grid (same action as "New document"). */
+export function BlankDocTile() {
+  const { create, pending } = useCreateDocument();
+  return (
+    <button
+      type="button"
+      onClick={create}
+      disabled={pending}
+      className="flex h-full min-h-[200px] w-full flex-col items-center justify-center gap-3 rounded-card border-[1.5px] border-dashed border-dashline text-[13px] font-medium text-ink-2 outline-none transition-colors hover:bg-surface focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-60"
+    >
+      <span className="flex size-11 items-center justify-center rounded-full border-[1.5px] border-ink bg-surface text-ink shadow-offset-sm">
+        <Plus className="size-[18px]" strokeWidth={2} />
+      </span>
+      {pending ? "Creating…" : "Blank document"}
+    </button>
   );
 }

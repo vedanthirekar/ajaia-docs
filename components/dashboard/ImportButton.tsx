@@ -60,11 +60,11 @@ export function ImportButton() {
       <Tooltip>
         <TooltipTrigger
           render={
-            <Button variant="outline" size="lg" onClick={() => input.current?.click()} disabled={pending} />
+            <Button variant="ink-outline" size="cta" onClick={() => input.current?.click()} disabled={pending} />
           }
         >
-          <Upload />
-          {pending ? "Importing…" : "Import file"}
+          <Upload strokeWidth={1.8} />
+          {pending ? "Importing…" : "Import"}
         </TooltipTrigger>
         <TooltipContent>Creates a new document from the file</TooltipContent>
       </Tooltip>

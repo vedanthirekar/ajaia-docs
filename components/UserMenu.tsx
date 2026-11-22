@@ -2,7 +2,6 @@
 
 import { LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,12 +28,14 @@ export function UserMenu({ name, email }: { name: string; email: string }) {
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button variant="ghost" size="icon" className="rounded-full" aria-label={`Account menu for ${name}`} />
+          <button
+            type="button"
+            aria-label={`Account menu for ${name}`}
+            className="flex size-[34px] shrink-0 items-center justify-center rounded-full border-[1.5px] border-ink bg-sky text-xs font-semibold text-ink outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          />
         }
       >
-        <span className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-          {initials(name)}
-        </span>
+        {initials(name)}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         {/* Base UI requires group labels to live inside a Menu.Group */}

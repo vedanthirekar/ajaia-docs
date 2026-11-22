@@ -81,7 +81,8 @@ test("create, format, persist, share as viewer, and enforce read-only access", a
   const bobCtx = await browser.newContext();
   const b = await bobCtx.newPage();
   await signUp(b, bob);
-  const sharedSection = b.getByRole("region", { name: /Shared with me/ });
+  await b.getByRole("button", { name: "Shared with me" }).click();
+  const sharedSection = b.getByRole("region", { name: "Shared with me" });
   const card = sharedSection.getByRole("listitem").filter({ hasText: "E2E Doc" });
   await expect(card).toBeVisible();
   await expect(card.getByText("Viewer")).toBeVisible();

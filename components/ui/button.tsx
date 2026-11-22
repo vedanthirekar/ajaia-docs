@@ -17,6 +17,10 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
+        // Cotton theme (design-handoff/DESIGN.md › Components)
+        primary:
+          "border-[1.5px] border-ink bg-ink text-white shadow-offset-md hover:bg-ink/90 active:not-aria-[haspopup]:translate-x-px active:not-aria-[haspopup]:shadow-offset-sm",
+        "ink-outline": "border-[1.5px] border-ink bg-surface text-ink hover:bg-cream aria-expanded:bg-cream",
       },
       size: {
         default:
@@ -30,6 +34,8 @@ const buttonVariants = cva(
         "icon-sm":
           "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg",
         "icon-lg": "size-9",
+        // Spec: 40px tall, 0 18px padding, 13px label, 15px leading icon
+        cta: "h-10 gap-2 px-[18px] text-[13px] [&_svg:not([class*='size-'])]:size-[15px]",
       },
     },
     defaultVariants: {

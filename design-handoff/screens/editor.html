@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Editor · Cotton theme</title>
+<link rel="icon" href="../assets/logo.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2B2A3A}a:hover{color:#000}
+</style>
+</head>
+<body>
+<div style="min-height: 1020px; background: #FBF7EF; font-family: Inter, system-ui, sans-serif; color: #2B2A3A; font-size: 13px">
+  <header style="background: #FFFDF8; border-bottom: 1px solid #ECE5D8; padding: 0 20px; height: 60px; display: flex; align-items: center; gap: 14px">
+    <a href="#" aria-label="Back to documents" style="display: flex">
+      <img src="../assets/logo.png" alt="Ajaia Docs" width="30" height="30">
+    </a>
+    <div style="min-width: 0">
+      <div style="font-family: Newsreader, Georgia, serif; font-size: 18px; font-weight: 500; line-height: 1.1">Q4 planning notes</div>
+      <div style="font-size: 12px; color: #6A6577; margin-top: 2px; display: flex; align-items: center; gap: 6px"><span style="width: 6px; height: 6px; border-radius: 50%; background: #3E9B6A"></span>Saved · Documents</div>
+    </div>
+    <div style="margin-left: auto; display: flex; align-items: center">
+      <span title="Alice Chen" style="width: 30px; height: 30px; border-radius: 50%; border: 2px solid #FFFDF8; background: #F7D3CF; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600">AC</span>
+      <span title="Bob Tester" style="width: 30px; height: 30px; margin-left: -8px; border-radius: 50%; border: 2px solid #FFFDF8; background: #FFE7A3; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600">BT</span>
+    </div>
+    <button style="height: 38px; padding: 0 16px; border: 1.5px solid #2B2A3A; border-radius: 10px; background: #2B2A3A; box-shadow: 3px 3px 0 #CFE6F7; color: #FFFFFF; font: 500 13px Inter, sans-serif; display: flex; align-items: center; gap: 8px">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 12h8M12 8l4 4-4 4"></path><rect x="3" y="4" width="18" height="16" rx="3"></rect></svg>Share
+    </button>
+    <button aria-label="More" style="width: 36px; height: 36px; border: 1px solid #E2DACB; border-radius: 10px; background: #FFFDF8; color: #4A4657; font-size: 16px">⋯</button>
+  </header>
+
+  <div style="position: sticky; top: 0; display: flex; justify-content: center; padding: 14px 20px 0">
+    <div role="toolbar" aria-label="Formatting" style="display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 4px; background: #FFFDF8; border: 1px solid #E2DACB; border-radius: 12px">
+      <button aria-label="Undo" style="width: 34px; height: 32px; border: 0; border-radius: 7px; background: transparent; color: #4A4657"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"></path><path d="M4 9h10a6 6 0 0 1 0 12h-3"></path></svg></button>
+      <button aria-label="Redo" style="width: 34px; height: 32px; border: 0; border-radius: 7px; background: transparent; color: #4A4657"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 14 5-5-5-5"></path><path d="M20 9H10a6 6 0 0 0 0 12h3"></path></svg></button>
+      <span style="width: 1px; height: 20px; background: #E2DACB; margin: 0 6px"></span>
+      <button style="height: 32px; padding: 0 10px; border: 0; border-radius: 7px; background: transparent; font: 500 13px Inter, sans-serif; color: #2B2A3A; display: flex; align-items: center; gap: 6px">Heading 2<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button>
+      <span style="width: 1px; height: 20px; background: #E2DACB; margin: 0 6px"></span>
+      <button aria-label="Bold" style="width: 34px; height: 32px; border: 0; border-radius: 7px; background: #CFE6F7; font: 700 14px Inter, sans-serif; color: #2B2A3A">B</button>
+      <button aria-label="Italic" style="width: 34px; height: 32px; border: 0; border-radius: 7px; background: transparent; font: italic 500 15px Newsreader, serif; color: #2B2A3A">I</button>
+      <button aria-label="Underline" style="width: 34px; height: 32px; border: 0; border-radius: 7px; background: transparent; font: 500 14px Inter, sans-serif; text-decoration: underline; color: #2B2A3A">U</button>
+      <button aria-label="Highlight" style="width: 34px; height: 32px; border: 0; border-radius: 7px; background: transparent; color: #2B2A3A"><span style="display: inline-block; padding: 0 4px; background: #FFE7A3; border-radius: 3px; font-weight: 600">A</span></button>
+      <span style="width: 1px; height: 20px; background: #E2DACB; margin: 0 6px"></span>
+      <button aria-label="Bulleted list" style="width: 34px; height: 32px; border: 0; border-radius: 7px; background: transparent; color: #4A4657"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"></path><circle cx="4.5" cy="6" r="1"></circle><circle cx="4.5" cy="12" r="1"></circle><circle cx="4.5" cy="18" r="1"></circle></svg></button>
+      <button aria-label="Checklist" style="width: 34px; height: 32px; border: 0; border-radius: 7px; background: transparent; color: #4A4657"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="6" height="6" rx="1.5"></rect><path d="m4.5 7 1.2 1.2L7.8 6M12 7h9M3 14h6v6H3zM12 17h9"></path></svg></button>
+      <button aria-label="Link" style="width: 34px; height: 32px; border: 0; border-radius: 7px; background: transparent; color: #4A4657"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg></button>
+      <button aria-label="Quote" style="width: 34px; height: 32px; border: 0; border-radius: 7px; background: transparent; font: 500 20px Newsreader, serif; color: #4A4657">“</button>
+    </div>
+  </div>
+
+  <main style="display: flex; justify-content: center; padding: 22px 20px 64px">
+    <article style="width: 100%; max-width: 780px; background: #FFFFFF; border: 1px solid #E6DFD1; border-radius: 6px; padding: 64px 80px 72px; box-sizing: border-box; font-family: Newsreader, Georgia, serif; font-size: 18px; line-height: 1.65; color: #2B2A3A">
+      <h1 style="margin: 0 0 6px; font-weight: 500; font-size: 38px; line-height: 1.15; letter-spacing: -0.01em">Q4 planning notes</h1>
+      <p style="margin: 0 0 28px; font-family: Inter, sans-serif; font-size: 13px; color: #6A6577">Vedant H. · Last edited 13 minutes ago</p>
+      <p style="margin: 0 0 18px">We want the editor to feel like a quiet sheet of paper. Formatting stays out of the way until you need it, and sharing takes two clicks.</p>
+      <h2 style="margin: 30px 0 10px; font-weight: 500; font-size: 24px">Goals for this quarter</h2>
+      <ul style="margin: 0 0 18px; padding-left: 22px">
+        <li>Ship import for <strong>.docx</strong> with headings and lists intact</li>
+        <li>Role based sharing: owner, <span style="background: #FFE7A3; padding: 0 3px; border-radius: 3px">editor and viewer</span></li>
+        <li style="position: relative">Autosave with a visible “Saved” state<span style="display: inline-block; width: 2px; height: 22px; background: #D9786C; vertical-align: -4px; margin-left: 2px"></span><span style="position: absolute; top: -18px; margin-left: -2px; font-family: Inter, sans-serif; font-size: 10px; font-weight: 600; line-height: 1; padding: 3px 5px; border-radius: 4px 4px 4px 0; background: #F7D3CF; color: #2B2A3A">Alice</span></li>
+      </ul>
+      <blockquote style="margin: 24px 0; padding: 4px 0 4px 18px; border-left: 3px solid #CFE6F7; font-style: italic; color: #4A4657">Keep it simple enough that nobody needs a tutorial.</blockquote>
+      <h2 style="margin: 30px 0 10px; font-weight: 500; font-size: 24px">Open questions</h2>
+      <p style="margin: 0">Should shared documents show the owner on every card, or only on hover? Bob to check with the team before Friday.</p>
+    </article>
+  </main>
+</div>
+</body>
+</html>

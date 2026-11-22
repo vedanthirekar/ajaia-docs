@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FileText } from "lucide-react";
+import Image from "next/image";
 import { buttonVariants } from "@/components/ui/button";
 import { UserMenu } from "./UserMenu";
 
@@ -15,13 +15,11 @@ export function AppHeader({
   signInCallback?: string;
 }) {
   return (
-    <header className="sticky top-0 z-30 print:hidden border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4">
-        <Link href="/" className="flex shrink-0 items-center gap-2 font-semibold" aria-label="Ajaia Docs home">
-          <span className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <FileText className="size-4" />
-          </span>
-          <span className="hidden sm:inline">Ajaia Docs</span>
+    <header className="sticky top-0 z-30 border-b border-line bg-surface print:hidden">
+      <div className="mx-auto flex h-[68px] max-w-[1120px] items-center gap-3 px-4 sm:gap-6 sm:px-8">
+        <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="Ajaia Docs home">
+          <Image src="/logo.png" alt="" width={32} height={32} priority />
+          <span className="hidden font-display text-xl font-medium sm:inline">Ajaia Docs</span>
         </Link>
         <div className="flex min-w-0 flex-1 items-center gap-3">{children}</div>
         {user ? (
