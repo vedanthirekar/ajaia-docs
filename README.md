@@ -2,7 +2,7 @@
 
 A lightweight collaborative document editor: create and format documents, import files, and share them with other people as viewers or editors.
 
-**Live demo:** _<add Vercel URL after deploy>_
+**Live demo:** https://ajaia-docs-one-omega.vercel.app
 
 > Built for the Ajaia AI-Native Full Stack Developer assignment. See [ARCHITECTURE.md](ARCHITECTURE.md) for what I prioritized and why, [AI_NOTES.md](AI_NOTES.md) for how I used AI, and [decisions.md](decisions.md) for the full decision log.
 
