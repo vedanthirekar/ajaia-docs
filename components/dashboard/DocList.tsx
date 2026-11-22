@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { FileText, MoreVertical, Trash2 } from "lucide-react";
+import { FileText, MoreVertical, Share2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ShareDialog } from "@/components/share/ShareDialog";
 import { apiFetch, ApiError } from "@/lib/client/api";
 import { timeAgo } from "@/lib/format";
 import type { DocSummary } from "@/lib/services/documents";
@@ -26,6 +33,7 @@ const ROLE_LABEL = { owner: "Owner", editor: "Editor", viewer: "Viewer" } as con
 export function DocList({ docs, emptyText }: { docs: DocSummary[]; emptyText: string }) {
   const router = useRouter();
   const [toDelete, setToDelete] = useState<DocSummary | null>(null);
+  const [toShare, setToShare] = useState<DocSummary | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   async function confirmDelete() {
@@ -70,7 +78,13 @@ export function DocList({ docs, emptyText }: { docs: DocSummary[]; emptyText: st
                 {d.title}
               </Link>
               <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-                <span>Edited {timeAgo(d.updatedAt)}</span>
+                <span>
+                  Edited{" "}
+                  {/* Relative time differs between server render and hydration by design. */}
+                  <time dateTime={new Date(d.updatedAt).toISOString()} suppressHydrationWarning>
+                    {timeAgo(d.updatedAt)}
+                  </time>
+                </span>
                 {d.role !== "owner" && (
                   <>
                     <span aria-hidden>·</span>
@@ -98,6 +112,11 @@ export function DocList({ docs, emptyText }: { docs: DocSummary[]; emptyText: st
                   <MoreVertical />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setToShare(d)}>
+                    <Share2 />
+                    Share
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem variant="destructive" onClick={() => setToDelete(d)}>
                     <Trash2 />
                     Delete
@@ -108,6 +127,17 @@ export function DocList({ docs, emptyText }: { docs: DocSummary[]; emptyText: st
           </li>
         ))}
       </ul>
+
+      {toShare && (
+        <ShareDialog
+          key={toShare.id}
+          docId={toShare.id}
+          docTitle={toShare.title}
+          initialOpen
+          hideTrigger
+          onClosed={() => setToShare(null)}
+        />
+      )}
 
       <Dialog open={toDelete !== null} onOpenChange={(open) => !open && !deleting && setToDelete(null)}>
         <DialogContent>

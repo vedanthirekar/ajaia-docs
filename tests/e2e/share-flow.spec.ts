@@ -67,6 +67,16 @@ test("create, format, persist, share as viewer, and enforce read-only access", a
   await expect(dialog.getByText(/Pending/)).toBeVisible();
   const docUrl = a.url();
 
+  // --- The owner can also manage sharing from the dashboard's ⋮ menu ---
+  await a.goto("/");
+  await a.getByRole("button", { name: "Actions for E2E Doc" }).click();
+  await a.getByRole("menuitem", { name: "Share" }).click();
+  const dashDialog = a.getByRole("dialog");
+  await expect(dashDialog.getByText(bob.email)).toBeVisible();
+  await expect(dashDialog.getByText(/Pending/)).toBeVisible();
+  await a.keyboard.press("Escape");
+  await expect(dashDialog).toHaveCount(0);
+
   // --- Bob signs up and sees the doc as a viewer ---
   const bobCtx = await browser.newContext();
   const b = await bobCtx.newPage();

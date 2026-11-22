@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Check, Link2, Loader2, Share2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -45,8 +45,22 @@ function RoleSelect({
   );
 }
 
-export function ShareDialog({ docId, docTitle }: { docId: string; docTitle: string }) {
-  const [open, setOpen] = useState(false);
+export function ShareDialog({
+  docId,
+  docTitle,
+  initialOpen = false,
+  hideTrigger = false,
+  onClosed,
+}: {
+  docId: string;
+  docTitle: string;
+  /** Open immediately on mount (used when opened from the dashboard's ⋮ menu). */
+  initialOpen?: boolean;
+  /** Don't render the "Share" button (the caller opens it another way). */
+  hideTrigger?: boolean;
+  onClosed?: () => void;
+}) {
+  const [open, setOpen] = useState(initialOpen);
   const [shares, setShares] = useState<ShareView[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [email, setEmail] = useState("");
@@ -57,10 +71,10 @@ export function ShareDialog({ docId, docTitle }: { docId: string; docTitle: stri
   const [copied, setCopied] = useState(false);
 
   const load = useCallback(async () => {
-    setLoadError(null);
     try {
       const res = await apiFetch<{ shares: ShareView[] }>(`/api/documents/${docId}/shares`);
       setShares(res.shares);
+      setLoadError(null);
     } catch (e) {
       setLoadError(e instanceof ApiError ? e.message : "Couldn't load sharing settings");
     }
@@ -69,7 +83,15 @@ export function ShareDialog({ docId, docTitle }: { docId: string; docTitle: stri
   const onOpenChange = (next: boolean) => {
     setOpen(next);
     if (next) void load();
+    else onClosed?.();
   };
+
+  // When mounted already open, fetch the share list once (state is only set after the await).
+  useEffect(() => {
+    // load() only sets state after its network await, so this can't cascade renders.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (initialOpen) void load();
+  }, [initialOpen, load]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -139,10 +161,12 @@ export function ShareDialog({ docId, docTitle }: { docId: string; docTitle: stri
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger render={<Button size="sm" />}>
-        <Share2 />
-        Share
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger render={<Button size="sm" />}>
+          <Share2 />
+          Share
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="truncate pr-6">Share “{docTitle}”</DialogTitle>

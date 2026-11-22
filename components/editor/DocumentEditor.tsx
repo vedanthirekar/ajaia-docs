@@ -161,9 +161,9 @@ export function DocumentEditor({ doc, user }: { doc: EditorDoc; user: { name: st
         {doc.role === "owner" && <ShareDialog docId={doc.id} docTitle={title} />}
       </AppHeader>
 
-      <div className="mx-auto w-full max-w-[880px] flex-1 px-2 pb-24 sm:px-4">
+      <div className="mx-auto w-full max-w-[880px] flex-1 px-2 pb-24 sm:px-4 print:max-w-none print:p-0">
         {(locked || !canEdit) && (
-          <div className="mt-4 space-y-3">
+          <div className="mt-4 space-y-3 print:hidden">
             {state === "conflict" && (
               <Alert variant="destructive" data-testid="conflict-banner">
                 <AlertTriangle />
@@ -245,12 +245,16 @@ export function DocumentEditor({ doc, user }: { doc: EditorDoc; user: { name: st
         )}
 
         {canEdit && editor && !locked && (
-          <div className="sticky top-14 z-20 -mx-1 bg-muted/40 px-1 pt-3 pb-2 backdrop-blur">
+          <div className="sticky top-14 z-20 -mx-1 bg-muted/40 px-1 pt-3 pb-2 backdrop-blur print:hidden">
             <Toolbar editor={editor} />
           </div>
         )}
 
-        <article className="mx-auto mt-3 min-h-[70vh] rounded-sm border bg-background px-6 py-10 shadow-sm sm:px-16 sm:py-14">
+        {/* A4 sheet: 210 × 297 mm with Word's default 2.54 cm margins. Printing uses @page A4 (globals.css). */}
+        <article
+          data-testid="page"
+          className="doc-page mx-auto mt-3 w-full max-w-[210mm] min-h-[297mm] rounded-sm border bg-background px-5 py-8 shadow-sm sm:px-[25.4mm] sm:py-[25.4mm] print:m-0 print:min-h-0 print:max-w-none print:border-0 print:p-0 print:shadow-none"
+        >
           {editor ? (
             <EditorContent editor={editor} />
           ) : (

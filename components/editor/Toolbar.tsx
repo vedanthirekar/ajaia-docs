@@ -16,6 +16,8 @@ import {
   List,
   ListOrdered,
   Minus,
+  Plus,
+  SeparatorHorizontal,
   Quote,
   Redo2,
   Strikethrough,
@@ -29,6 +31,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  COLOR_PALETTE,
+  DEFAULT_FONT_SIZE,
+  FONT_SIZE_PRESETS,
+  normalizeHexColor,
+  parseFontSize,
+  stepFontSize,
+} from "@/lib/editor/formatting";
 import { normalizeLinkUrl } from "@/lib/editor/links";
 import { cn } from "@/lib/utils";
 
@@ -42,21 +52,6 @@ const BLOCK_LABELS: Record<BlockStyle, string> = {
   h2: "Heading 2",
   h3: "Heading 3",
 };
-
-const FONT_SIZES = ["default", "12px", "14px", "18px", "24px", "32px"] as const;
-type FontSizeValue = (typeof FONT_SIZES)[number];
-const fontSizeLabel = (v: string) => (v === "default" ? "Size" : v.replace("px", ""));
-
-const TEXT_COLORS = [
-  { name: "Default", value: null },
-  { name: "Gray", value: "#6b7280" },
-  { name: "Red", value: "#dc2626" },
-  { name: "Orange", value: "#ea580c" },
-  { name: "Green", value: "#16a34a" },
-  { name: "Blue", value: "#2563eb" },
-  { name: "Purple", value: "#9333ea" },
-  { name: "Pink", value: "#db2777" },
-] as const;
 
 const ALIGNMENTS: { value: "left" | "center" | "right" | "justify"; icon: LucideIcon; label: string; shortcut: string }[] = [
   { value: "left", icon: AlignLeft, label: "Align left", shortcut: isMac ? "⇧⌘L" : "Ctrl+Shift+L" },
@@ -113,53 +108,162 @@ const Divider = () => <Separator orientation="vertical" className="mx-1 h-5!" />
 
 function ColorPicker({ editor, current }: { editor: Editor; current: string | null }) {
   const [open, setOpen] = useState(false);
+  const [hex, setHex] = useState("");
+  const [hexError, setHexError] = useState(false);
+  const currentHex = current ? normalizeHexColor(current) : null;
+
+  const apply = (color: string | null) => {
+    const chain = editor.chain().focus();
+    if (color) chain.setColor(color).run();
+    else chain.unsetColor().run();
+    setOpen(false);
+  };
+
+  const applyHex = (e: FormEvent) => {
+    e.preventDefault();
+    const c = normalizeHexColor(hex);
+    if (!c) {
+      setHexError(true);
+      return;
+    }
+    apply(c);
+  };
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        if (next) {
+          setHex(currentHex ?? "");
+          setHexError(false);
+        }
+        setOpen(next);
+      }}
+    >
       <PopoverTrigger
         render={
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Text colour"
-            title="Text colour"
-            onMouseDown={keepSelection}
-          />
+          <Button type="button" variant="ghost" size="icon-sm" aria-label="Text colour" title="Text colour" onMouseDown={keepSelection} />
         }
       >
         <span className="flex flex-col items-center">
           <Baseline className="size-4" />
-          <span className="-mt-0.5 h-1 w-4 rounded-full" style={{ background: current ?? "currentColor" }} />
+          <span className="-mt-0.5 h-1 w-4 rounded-full border border-black/10" style={{ background: current ?? "currentColor" }} />
         </span>
       </PopoverTrigger>
       <PopoverContent className="w-auto" align="start" initialFocus={false}>
-        <div className="grid grid-cols-4 gap-1.5" role="group" aria-label="Text colours">
-          {TEXT_COLORS.map((c) => (
+        <button
+          type="button"
+          onMouseDown={keepSelection}
+          onClick={() => apply(null)}
+          className="flex items-center gap-2 rounded-md px-1.5 py-1 text-left text-xs hover:bg-muted"
+        >
+          <span className="size-4 rounded-sm border bg-foreground" /> Default
+        </button>
+        <div className="grid grid-cols-8 gap-1" role="group" aria-label="Text colours">
+          {COLOR_PALETTE.flat().map((c) => (
             <button
-              key={c.name}
+              key={c}
               type="button"
-              title={c.name}
-              aria-label={c.name}
-              aria-pressed={current === c.value || (!current && c.value === null)}
+              title={c}
+              aria-label={`Colour ${c}`}
+              aria-pressed={currentHex === c}
               onMouseDown={keepSelection}
-              onClick={() => {
-                const chain = editor.chain().focus();
-                if (c.value) chain.setColor(c.value).run();
-                else chain.unsetColor().run();
-                setOpen(false);
-              }}
+              onClick={() => apply(c)}
               className={cn(
-                "flex size-7 items-center justify-center rounded-md border text-xs font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-                (current === c.value || (!current && c.value === null)) && "ring-2 ring-primary",
+                "size-5 rounded-full border border-black/10 outline-none hover:scale-110 focus-visible:ring-3 focus-visible:ring-ring/50",
+                currentHex === c && "ring-2 ring-primary ring-offset-1",
               )}
-              style={{ color: c.value ?? undefined }}
-            >
-              A
-            </button>
+              style={{ background: c }}
+            />
           ))}
         </div>
+        <form onSubmit={applyHex} className="flex items-center gap-1.5 border-t pt-2.5" noValidate>
+          <label className="relative size-7 shrink-0 cursor-pointer overflow-hidden rounded-md border" title="Pick any colour">
+            <span className="sr-only">Pick a custom colour</span>
+            <span className="absolute inset-0" style={{ background: normalizeHexColor(hex) ?? "conic-gradient(red, yellow, lime, aqua, blue, magenta, red)" }} />
+            <input
+              type="color"
+              className="absolute inset-0 cursor-pointer opacity-0"
+              value={normalizeHexColor(hex) ?? "#000000"}
+              onChange={(e) => {
+                setHex(e.target.value);
+                setHexError(false);
+              }}
+            />
+          </label>
+          <Input
+            aria-label="Hex colour"
+            placeholder="#1a73e8"
+            value={hex}
+            onChange={(e) => {
+              setHex(e.target.value);
+              setHexError(false);
+            }}
+            aria-invalid={hexError || undefined}
+            className="h-7 w-24 font-mono text-xs"
+          />
+          <Button type="submit" size="sm">
+            Apply
+          </Button>
+        </form>
       </PopoverContent>
     </Popover>
+  );
+}
+
+function FontSizeControl({ editor, current }: { editor: Editor; current: number }) {
+  const [draft, setDraft] = useState(String(current));
+  const [shown, setShown] = useState(current);
+  if (current !== shown) {
+    // Follow the cursor: show the size at the current selection.
+    setShown(current);
+    setDraft(String(current));
+  }
+
+  const apply = (size: number) => {
+    const chain = editor.chain().focus();
+    if (size === DEFAULT_FONT_SIZE) chain.unsetFontSize().run();
+    else chain.setFontSize(`${size}px`).run();
+    setDraft(String(size));
+  };
+
+  return (
+    <div className="flex shrink-0 items-center" role="group" aria-label="Font size">
+      <ToolButton icon={Minus} label="Decrease font size" onClick={() => apply(stepFontSize(current, -1))} />
+      <input
+        aria-label="Font size"
+        data-testid="font-size"
+        inputMode="decimal"
+        list="font-size-presets"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onFocus={(e) => e.target.select()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            const n = parseFontSize(draft);
+            if (n === null) setDraft(String(current));
+            else apply(n);
+          }
+          if (e.key === "Escape") {
+            setDraft(String(current));
+            editor.commands.focus();
+          }
+        }}
+        onBlur={() => {
+          const n = parseFontSize(draft);
+          if (n === null || n === current) setDraft(String(current));
+          else apply(n);
+        }}
+        className="h-7 w-11 rounded-md border bg-background text-center text-sm tabular-nums outline-none focus:border-ring focus:ring-3 focus:ring-ring/30"
+      />
+      <datalist id="font-size-presets">
+        {FONT_SIZE_PRESETS.map((p) => (
+          <option key={p} value={p} />
+        ))}
+      </datalist>
+      <ToolButton icon={Plus} label="Increase font size" onClick={() => apply(stepFontSize(current, 1))} />
+    </div>
   );
 }
 
@@ -272,7 +376,7 @@ export function Toolbar({ editor }: { editor: Editor }) {
       blockquote: e.isActive("blockquote"),
       align: (["center", "right", "justify"] as const).find((a) => e.isActive({ textAlign: a })) ?? "left",
       color: (e.getAttributes("textStyle").color as string | undefined) ?? null,
-      fontSize: ((e.getAttributes("textStyle").fontSize as string | undefined) ?? "default") as string,
+      fontSize: parseFontSize((e.getAttributes("textStyle").fontSize as string | undefined) ?? "") ?? DEFAULT_FONT_SIZE,
       block: (e.isActive("heading", { level: 1 })
         ? "h1"
         : e.isActive("heading", { level: 2 })
@@ -289,12 +393,6 @@ export function Toolbar({ editor }: { editor: Editor }) {
     const chain = editor.chain().focus();
     if (v === "paragraph") chain.setParagraph().run();
     else chain.setHeading({ level: Number(v.slice(1)) as 1 | 2 | 3 }).run();
-  };
-
-  const setFontSize = (v: string) => {
-    const chain = editor.chain().focus();
-    if (v === "default") chain.unsetFontSize().run();
-    else chain.setFontSize(v).run();
   };
 
   return (
@@ -328,21 +426,8 @@ export function Toolbar({ editor }: { editor: Editor }) {
         </SelectContent>
       </Select>
 
-      <Select
-        value={(FONT_SIZES as readonly string[]).includes(s.fontSize) ? s.fontSize : "default"}
-        onValueChange={(v) => v && setFontSize(v as FontSizeValue)}
-      >
-        <SelectTrigger size="sm" className="w-20 shrink-0 border-transparent shadow-none" aria-label="Font size">
-          <SelectValue>{(v: string) => fontSizeLabel(v)}</SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          {FONT_SIZES.map((v) => (
-            <SelectItem key={v} value={v}>
-              {v === "default" ? "Default" : v.replace("px", "")}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <Divider />
+      <FontSizeControl editor={editor} current={s.fontSize} />
       <Divider />
 
       <ToolButton icon={Bold} label="Bold" shortcut={`${mod}B`} active={s.bold} onClick={() => editor.chain().focus().toggleBold().run()} />
@@ -369,7 +454,7 @@ export function Toolbar({ editor }: { editor: Editor }) {
       <ToolButton icon={List} label="Bulleted list" shortcut={isMac ? "⇧⌘8" : "Ctrl+Shift+8"} active={s.bulletList} onClick={() => editor.chain().focus().toggleBulletList().run()} />
       <ToolButton icon={ListOrdered} label="Numbered list" shortcut={isMac ? "⇧⌘7" : "Ctrl+Shift+7"} active={s.orderedList} onClick={() => editor.chain().focus().toggleOrderedList().run()} />
       <ToolButton icon={Quote} label="Quote" shortcut={isMac ? "⇧⌘B" : "Ctrl+Shift+B"} active={s.blockquote} onClick={() => editor.chain().focus().toggleBlockquote().run()} />
-      <ToolButton icon={Minus} label="Divider line" onClick={() => editor.chain().focus().setHorizontalRule().run()} />
+      <ToolButton icon={SeparatorHorizontal} label="Divider line" onClick={() => editor.chain().focus().setHorizontalRule().run()} />
     </div>
   );
 }

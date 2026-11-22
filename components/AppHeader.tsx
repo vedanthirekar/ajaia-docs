@@ -10,7 +10,7 @@ export function AppHeader({
   children?: React.ReactNode;
 }) {
   return (
-    <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
+    <header className="sticky top-0 z-30 print:hidden border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4">
         <Link href="/" className="flex shrink-0 items-center gap-2 font-semibold" aria-label="Ajaia Docs home">
           <span className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">

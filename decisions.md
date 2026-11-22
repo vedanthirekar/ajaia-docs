@@ -92,3 +92,9 @@ Format: **D-### · Date · Title**. Decision / Options / Rationale / Tradeoff.
 - **Decision:** add text alignment, highlight, text colour, font size, a link editor, quote and divider, all from MIT-licensed official TipTap packages. No pagination or page margins.
 - **Rationale:** TipTap Pages is a paid Pro add-on, and the brief forbids paid dependencies. Community pagination add-ons are early-stage, and pagination (splitting lists and tables across pages) is a big risk to editing reliability. The formatting extensions add real user value at almost no risk, because they're part of the same schema and covered by schema round-trip tests.
 - **Safety:** links are restricted to http, https and mailto, both in the link dialog (`normalizeLinkUrl`) and in TipTap's own parser. Read-only viewers can click links; editors click to place the cursor.
+
+### D-018 · 2026-11-21 · A4 sheet + print pagination; free-form size and colour; share from dashboard
+- **A4:** the editor page is 210 mm wide with 25.4 mm margins (Word's defaults), and `@page { size: A4 }` print CSS lets the browser produce real A4 pages on Ctrl+P. There's still no on-screen pagination, which is the hard and risky part (see D-017).
+- **Font size and colour:** the TipTap extensions already accept any value, so the toolbar allows any size from 6 to 96 (typed, or −/+ through Google-Docs-style presets) and any colour (palette, picker, hex). Inputs are validated (`parseFontSize`, `normalizeHexColor`) so only safe style values are stored.
+- **Dashboard:** the ⋮ menu offers Share (reusing the same dialog) next to Delete, so owners don't have to open a doc to share it.
+- **Invite emails (still none):** sending to arbitrary addresses needs an email provider plus a verified domain, or the owner's personal Gmail credentials. Left as a deliberate cut; the in-app pending invite and Copy link cover the flow.
