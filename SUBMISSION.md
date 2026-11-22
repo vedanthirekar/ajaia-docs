@@ -5,6 +5,7 @@
 | **Live app** | https://ajaia-docs-one-omega.vercel.app |
 | **Walkthrough video** | https://www.loom.com/share/769a823ce741430a916e137ee73f2b0f |
 | **Code (GitHub)** | https://github.com/vedanthirekar/ajaia-docs |
+| **Submission folder (Google Drive)** | https://drive.google.com/drive/folders/1EJVFhVJn6lMISa72beTG1s0g08dJMWwd |
 
 **Quickest way to review:** on the login page, click a **demo account** (password `ajaia-demo-2026`). The three accounts already share documents with each other as editor, viewer, pending invite and public link. The README has the details.
 
