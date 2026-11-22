@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Check, Globe, Link2, Loader2, Lock, SquareArrowRight, X } from "lucide-react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,8 +12,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiFetch, ApiError } from "@/lib/client/api";
 import type { ShareRole, ShareView } from "@/lib/services/shares";
@@ -35,7 +32,11 @@ function RoleSelect({
 }) {
   return (
     <Select value={value} onValueChange={(v) => v && onChange(v as ShareRole)} disabled={disabled}>
-      <SelectTrigger className="w-28 shrink-0" aria-label={label}>
+      <SelectTrigger
+        size="sm"
+        aria-label={label}
+        className="h-8 w-auto shrink-0 gap-1 border-0 bg-transparent px-1.5 text-[13px] font-medium text-ink-2 shadow-none hover:bg-cream dark:bg-transparent"
+      >
         <SelectValue>{(v: ShareRole) => ROLE_LABEL[v]}</SelectValue>
       </SelectTrigger>
       <SelectContent>
@@ -46,12 +47,35 @@ function RoleSelect({
   );
 }
 
+/** Collaborator pastels (spec: sky, blush, butter, mint). The owner is always sky. */
+const AVATAR_FILLS = ["bg-butter", "bg-blush", "bg-mint", "bg-sky-soft"] as const;
+
+function Avatar({ name, fill }: { name: string; fill: string }) {
+  const initials =
+    name
+      .replace(/@.*/, "")
+      .split(/[\s._-]+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase())
+      .join("") || "?";
+  return (
+    <span
+      aria-hidden
+      className={cn("flex size-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-ink", fill)}
+    >
+      {initials}
+    </span>
+  );
+}
+
 export function ShareDialog({
   docId,
   docTitle,
   initialOpen = false,
   hideTrigger = false,
   onClosed,
+  owner,
 }: {
   docId: string;
   docTitle: string;
@@ -60,6 +84,8 @@ export function ShareDialog({
   /** Don't render the "Share" button (the caller opens it another way). */
   hideTrigger?: boolean;
   onClosed?: () => void;
+  /** The signed-in owner, shown as the first "(you)" row. */
+  owner?: { name: string; email: string };
 }) {
   const [open, setOpen] = useState(initialOpen);
   const [shares, setShares] = useState<ShareView[] | null>(null);
@@ -190,121 +216,136 @@ export function ShareDialog({
           <span className="hidden sm:inline">Share</span>
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="truncate pr-6">Share “{docTitle}”</DialogTitle>
-          <DialogDescription>
-            Viewers can read. Editors can edit and rename. Only you can share or delete.
-          </DialogDescription>
+      <DialogContent className="gap-0 sm:max-w-[480px]">
+        <DialogHeader className="gap-1 pr-10">
+          <DialogTitle className="font-display text-2xl leading-tight font-medium">Share document</DialogTitle>
+          <DialogDescription className="truncate text-[13px] text-meta">{docTitle}</DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={onSubmit} className="space-y-2" noValidate>
-          <Label htmlFor="share-email">Add people by email</Label>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Input
-              id="share-email"
-              type="email"
-              placeholder="name@example.com"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                if (formError) setFormError(null);
-              }}
-              aria-invalid={formError ? true : undefined}
-              aria-describedby={formError ? "share-error" : undefined}
-              autoComplete="off"
-              className="flex-1"
-            />
-            <div className="flex gap-2">
+        <form onSubmit={onSubmit} className="mt-5" noValidate>
+          <div className="flex gap-2">
+            <div
+              className={cn(
+                "flex h-10 min-w-0 flex-1 items-center rounded-lg border bg-page pr-1 pl-3 focus-within:border-ink-2 focus-within:ring-3 focus-within:ring-ring/20",
+                formError ? "border-destructive" : "border-field",
+              )}
+            >
+              <input
+                id="share-email"
+                type="email"
+                placeholder="Add people by email"
+                aria-label="Add people by email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (formError) setFormError(null);
+                }}
+                aria-invalid={formError ? true : undefined}
+                aria-describedby={formError ? "share-error" : undefined}
+                autoComplete="off"
+                className="min-w-0 flex-1 bg-transparent text-[13px] text-ink outline-none placeholder:text-meta"
+              />
               <RoleSelect value={role} onChange={setRole} label="Role for new person" />
-              <Button type="submit" disabled={submitting} className="flex-1 sm:flex-none">
-                {submitting ? <Loader2 className="animate-spin" /> : null}
-                Share
-              </Button>
             </div>
+            <Button type="submit" disabled={submitting} className="h-10 border-[1.5px] border-ink px-4 text-[13px]">
+              {submitting ? <Loader2 className="animate-spin" /> : null}
+              Invite
+            </Button>
           </div>
           {formError && (
-            <p id="share-error" role="alert" className="text-sm text-destructive">
+            <p id="share-error" role="alert" className="mt-1.5 text-xs text-destructive">
               {formError}
             </p>
           )}
         </form>
 
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium">People with access</h3>
-          {loadError ? (
-            <p className="text-sm text-destructive">
-              {loadError}{" "}
-              <button className="underline" onClick={() => void load()}>
-                Retry
-              </button>
-            </p>
-          ) : shares === null ? (
-            <p className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" /> Loading…
-            </p>
-          ) : shares.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Only you have access.</p>
-          ) : (
-            <ul className="max-h-64 divide-y overflow-y-auto rounded-lg border" data-testid="share-list">
-              {shares.map((s) => (
-                <li key={s.id} className="flex items-center gap-2 px-3 py-2">
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium">{s.name ?? s.email}</div>
-                    <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                      {s.name && <span className="truncate">{s.email}</span>}
-                      {s.status === "pending" && (
-                        <Badge variant="outline" className="h-5 text-[11px]" title="Will get access when they sign up">
-                          Pending — will get access when they sign up
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  <RoleSelect
-                    value={s.role}
-                    onChange={(r) => void changeRole(s, r)}
-                    disabled={busyId === s.id}
-                    label={`Role for ${s.email}`}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label={`Remove ${s.email}`}
-                    disabled={busyId === s.id}
-                    onClick={() => void remove(s)}
-                  >
-                    <X />
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        <h3 className="mt-[22px] mb-1.5 text-xs font-semibold text-meta">People with access</h3>
+        {loadError ? (
+          <p className="text-sm text-destructive">
+            {loadError}{" "}
+            <button className="underline" onClick={() => void load()}>
+              Retry
+            </button>
+          </p>
+        ) : shares === null ? (
+          <p className="flex h-[52px] items-center gap-2 text-sm text-meta">
+            <Loader2 className="size-4 animate-spin" /> Loading…
+          </p>
+        ) : (
+          <ul className="max-h-64 overflow-y-auto" data-testid="share-list">
+            {owner && (
+              <li className="flex h-[52px] items-center gap-3 border-b border-[#f0eadf]">
+                <Avatar name={owner.name} fill="bg-sky" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium">{owner.name} (you)</span>
+                  <span className="block truncate text-xs text-meta">{owner.email}</span>
+                </span>
+                <span className="px-1.5 text-[13px] text-ink-2">Owner</span>
+                <span className="w-7" aria-hidden />
+              </li>
+            )}
+            {shares.length === 0 && !owner && (
+              <li className="py-3 text-sm text-meta">Only you have access.</li>
+            )}
+            {shares.map((s, i) => (
+              <li key={s.id} className="flex min-h-[52px] items-center gap-3 border-b border-[#f0eadf] py-1.5">
+                <Avatar name={s.name ?? s.email} fill={AVATAR_FILLS[i % AVATAR_FILLS.length]} />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium">{s.name ?? s.email}</span>
+                  <span className="flex flex-wrap items-center gap-x-1.5 text-xs text-meta">
+                    {s.name && <span className="truncate">{s.email}</span>}
+                    {s.status === "pending" && (
+                      <span
+                        className="rounded-full border border-dashline px-1.5 text-[11px]"
+                        title="Will get access when they sign up"
+                      >
+                        Pending — will get access when they sign up
+                      </span>
+                    )}
+                  </span>
+                </span>
+                <RoleSelect
+                  value={s.role}
+                  onChange={(r) => void changeRole(s, r)}
+                  disabled={busyId === s.id}
+                  label={`Role for ${s.email}`}
+                />
+                <button
+                  type="button"
+                  aria-label={`Remove ${s.email}`}
+                  disabled={busyId === s.id}
+                  onClick={() => void remove(s)}
+                  className="flex size-7 shrink-0 items-center justify-center rounded-md text-meta outline-none hover:bg-cream hover:text-ink focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
 
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium">General access</h3>
-          <div className="flex items-center gap-3 rounded-lg border px-3 py-2">
-            <span
-              className={cn(
-                "flex size-8 shrink-0 items-center justify-center rounded-full",
-                isPublic ? "bg-green-500/15 text-green-700 dark:text-green-400" : "bg-muted text-muted-foreground",
-              )}
-            >
-              {isPublic ? <Globe className="size-4" /> : <Lock className="size-4" />}
-            </span>
-            <div className="min-w-0 flex-1 text-xs text-muted-foreground">
-              {isPublic === null
-                ? "Loading…"
-                : isPublic
-                  ? "Anyone with the link can view — no sign-in needed. Only people above can edit."
-                  : "Only people added above can open this document."}
-            </div>
+        <div className="mt-[18px] flex flex-wrap items-center gap-3 rounded-xl bg-cream p-3">
+          <span
+            className={cn(
+              "flex size-8 shrink-0 items-center justify-center rounded-[9px] border-[1.5px] border-ink text-ink",
+              isPublic ? "bg-mint" : "bg-butter",
+            )}
+          >
+            {isPublic ? <Globe className="size-[15px]" strokeWidth={1.8} /> : <Lock className="size-[15px]" strokeWidth={1.8} />}
+          </span>
+          <span className="min-w-0 flex-1">
             <Select
-              value={isPublic === null ? undefined : isPublic ? "public" : "restricted"}
+              // Always controlled (never undefined): switching uncontrolled→controlled made Base UI
+              // keep showing "Restricted" for public docs. Disabled until the real value loads.
+              value={isPublic ? "public" : "restricted"}
               onValueChange={(v) => v && void changeAccess(v === "public")}
               disabled={isPublic === null || savingAccess}
             >
-              <SelectTrigger className="w-40 shrink-0" aria-label="General access">
+              <SelectTrigger
+                size="sm"
+                aria-label="General access"
+                className="-ml-1.5 h-6 w-auto gap-1 border-0 bg-transparent px-1.5 text-[13px] font-medium text-ink shadow-none hover:bg-surface dark:bg-transparent"
+              >
                 <SelectValue>{(v: string) => (v === "public" ? "Anyone with the link" : "Restricted")}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -312,18 +353,24 @@ export function ShareDialog({
                 <SelectItem value="public">Anyone with the link</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-        </div>
-
-        <div className="flex flex-col-reverse items-start justify-between gap-3 border-t pt-4 sm:flex-row sm:items-center">
-          <p className="text-xs text-muted-foreground">
-            People you share with won’t get an email — send them the link.
-          </p>
-          <Button variant="outline" size="sm" onClick={copyLink}>
-            {copied ? <Check /> : <Link2 />}
+            <span className="block text-xs text-meta">
+              {isPublic === null
+                ? "Loading…"
+                : isPublic
+                  ? "Anyone with the link can view — no sign-in needed"
+                  : "Only people added above can open this"}
+            </span>
+          </span>
+          <Button variant="ink-outline" className="h-9 px-3.5 text-[13px]" onClick={copyLink}>
+            {copied ? <Check className="size-3.5" /> : <Link2 className="size-3.5" strokeWidth={1.8} />}
             {copied ? "Copied" : "Copy link"}
           </Button>
         </div>
+
+        <p className="mt-3 text-xs text-meta">
+          Viewers can read; editors can also edit and rename. People you share with won’t get an email — send them the
+          link.
+        </p>
       </DialogContent>
     </Dialog>
   );

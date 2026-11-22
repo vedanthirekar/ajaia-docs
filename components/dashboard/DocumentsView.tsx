@@ -177,6 +177,7 @@ export function DocumentsView({
           docTitle={toShare.title}
           initialOpen
           hideTrigger
+          owner={user}
           onClosed={() => {
             setToShare(null);
             router.refresh(); // reflect a visibility change (Public tag)

@@ -197,7 +197,7 @@ export function DocumentEditor({
             )}
           </div>
         </div>
-        {doc.role === "owner" && <ShareDialog docId={doc.id} docTitle={title} />}
+        {doc.role === "owner" && <ShareDialog docId={doc.id} docTitle={title} owner={user ?? undefined} />}
         <DropdownMenu>
           <DropdownMenuTrigger
             render={

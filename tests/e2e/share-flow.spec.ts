@@ -63,7 +63,7 @@ test("create, format, persist, share as viewer, and enforce read-only access", a
   await a.getByRole("button", { name: "Share" }).first().click();
   const dialog = a.getByRole("dialog");
   await dialog.getByLabel("Add people by email").fill(bob.email);
-  await dialog.getByRole("button", { name: "Share", exact: true }).click();
+  await dialog.getByRole("button", { name: "Invite", exact: true }).click();
   await expect(dialog.getByText(/Pending/)).toBeVisible();
   const docUrl = a.url();
 
@@ -112,6 +112,11 @@ test("create, format, persist, share as viewer, and enforce read-only access", a
   await shareDialog.getByRole("combobox", { name: "General access" }).click();
   await a.getByRole("option", { name: "Anyone with the link" }).click();
   await expect(shareDialog.getByText(/Anyone with the link can view/)).toBeVisible();
+  await a.keyboard.press("Escape");
+  // After a fresh load, the dialog must show the saved setting (regression: selector stuck on "Restricted").
+  await a.reload();
+  await a.getByRole("button", { name: "Share" }).first().click();
+  await expect(shareDialog.getByRole("combobox", { name: "General access" })).toHaveText(/Anyone with the link/);
   await a.keyboard.press("Escape");
 
   await anon.goto(docUrl);

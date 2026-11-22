@@ -104,3 +104,10 @@ Format: **D-### · Date · Title**. Decision / Options / Rationale / Tradeoff.
 - **Rules:** explicit roles win (making a doc public never downgrades an editor). Turning it off restores 404s. Visibility changes don't bump `version`. Public docs aren't added to anyone's "Shared with me". The proxy no longer guards `/documents/*`, because the page itself decides between rendering, a login redirect or a 404.
 - **Rationale:** a cheap, natural extension of the sharing model that's easy for reviewers to try. All access decisions still go through `lib/permissions.ts`, which is unit-tested with a null (anonymous) user.
 - **Invite emails** stay out of scope (agreed with the owner): not required by the brief.
+
+### D-020 · 2026-11-21 · "Cotton" visual theme from the design handoff
+- **Decision:** adopt `design-handoff/` as the visual source of truth. Tokens live in `app/tokens.css`, prefixed `--cotton-*` because shadcn already uses `--border` and `--muted` with different meanings. They're mapped onto shadcn's semantic variables and exposed as Tailwind utilities. Inter and Newsreader load via `next/font`. The logo is both favicon and header mark.
+- **Restyled as a visual-only change:** Documents page, editor and share dialog. The spec's offset shadow is used only on primary buttons, the Blank-document plus and modals.
+- **Small mockup items built:** filter tabs, Ctrl/⌘K search, Blank document tile, checklist (free official TipTap TaskList), More menu (Copy link, Print).
+- **Deliberate differences:** the import types hint stays visible (required by the brief); existing features kept (⋮ card menu, Public tag, font size/colour/alignment tools, A4 page size instead of the mockup's 780px page, pending-invite tag, account menu in the editor header).
+- **Left out:** live collaborator avatars and remote cursors (they need real-time presence; co-editing is deferred, D-007).
