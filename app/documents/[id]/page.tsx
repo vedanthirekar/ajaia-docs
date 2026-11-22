@@ -1,19 +1,23 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import { DocumentEditor } from "@/components/editor/DocumentEditor";
 import { getDb } from "@/lib/db";
 import { isAppError } from "@/lib/errors";
 import { getDocument } from "@/lib/services/documents";
-import { getPageUser } from "@/lib/session";
+import { getOptionalPageUser } from "@/lib/session";
 
 /** Deduped per request so metadata and the page share one lookup. */
 const loadDoc = cache(async (id: string) => {
-  const user = await getPageUser(`/documents/${id}`);
+  // Signed-out visitors may view public documents; everything else needs a session.
+  const user = await getOptionalPageUser();
   try {
     return { user, doc: await getDocument(getDb(), user, id) };
   } catch (e) {
-    if (isAppError(e) && e.code === "NOT_FOUND") notFound();
+    if (isAppError(e) && e.code === "NOT_FOUND") {
+      if (!user) redirect(`/login?callbackUrl=${encodeURIComponent(`/documents/${id}`)}`);
+      notFound();
+    }
     throw e;
   }
 });
@@ -39,6 +43,7 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
         version: doc.version,
         role: doc.role,
         ownerName: doc.ownerName,
+        isPublic: doc.isPublic,
       }}
       user={user}
     />

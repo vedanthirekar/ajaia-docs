@@ -1,13 +1,18 @@
 import Link from "next/link";
 import { FileText } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
 import { UserMenu } from "./UserMenu";
 
 export function AppHeader({
   user,
   children,
+  signInCallback,
 }: {
-  user: { name: string; email: string };
+  /** null for a signed-out visitor viewing a public document. */
+  user: { name: string; email: string } | null;
   children?: React.ReactNode;
+  /** Where to return after signing in (signed-out visitors only). */
+  signInCallback?: string;
 }) {
   return (
     <header className="sticky top-0 z-30 print:hidden border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
@@ -19,7 +24,16 @@ export function AppHeader({
           <span className="hidden sm:inline">Ajaia Docs</span>
         </Link>
         <div className="flex min-w-0 flex-1 items-center gap-3">{children}</div>
-        <UserMenu name={user.name} email={user.email} />
+        {user ? (
+          <UserMenu name={user.name} email={user.email} />
+        ) : (
+          <Link
+            href={`/login${signInCallback ? `?callbackUrl=${encodeURIComponent(signInCallback)}` : ""}`}
+            className={buttonVariants({ size: "sm" })}
+          >
+            Sign in
+          </Link>
+        )}
       </div>
     </header>
   );

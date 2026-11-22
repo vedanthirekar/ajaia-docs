@@ -1,5 +1,6 @@
 import { relations, sql } from "drizzle-orm";
 import {
+  boolean,
   index,
   integer,
   jsonb,
@@ -65,6 +66,8 @@ export const documents = pgTable(
       .notNull()
       .default(sql`'{"type":"doc","content":[{"type":"paragraph"}]}'::jsonb`),
     version: integer("version").notNull().default(1),
+    /** "Anyone with the link can view" — read-only, includes signed-out visitors. */
+    isPublic: boolean("is_public").notNull().default(false),
     createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
   },

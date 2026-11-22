@@ -12,3 +12,11 @@ export async function getPageUser(callbackPath?: string): Promise<User> {
   }
   return { id: u.id, email: u.email.toLowerCase(), name: u.name ?? u.email.split("@")[0] };
 }
+
+/** For server components that also serve anonymous visitors (public documents). */
+export async function getOptionalPageUser(): Promise<User | null> {
+  const session = await auth();
+  const u = session?.user;
+  if (!u?.id || !u.email) return null;
+  return { id: u.id, email: u.email.toLowerCase(), name: u.name ?? u.email.split("@")[0] };
+}

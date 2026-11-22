@@ -37,19 +37,21 @@ Passing `db` into every service means the tests run the **real SQL** against a f
 |---|---|---|
 | `users` | id, email (unique, lowercased), name, password_hash (nullable) | Shape compatible with the Auth.js adapter. Google-only users have no password hash. |
 | `accounts` | provider, providerAccountId → user | OAuth links (Auth.js) |
-| `documents` | id, owner_id, title, **content (jsonb)**, **version**, timestamps | Content is ProseMirror/TipTap JSON, so formatting round-trips exactly. |
+| `documents` | id, owner_id, title, **content (jsonb)**, **version**, **is_public**, timestamps | Content is ProseMirror/TipTap JSON, so formatting round-trips exactly. `is_public` = "anyone with the link can view". |
 | `document_shares` | document_id, **email**, user_id (nullable), role (`viewer`/`editor`) | Unique on (document, email). `user_id` is null while the invite is **pending**. Cascades on document delete. |
 
 Shares are matched by user id **or** email, so a pending invite grants access the moment someone signs up with that address. Signup and sign-in also "claim" pending rows.
 
 ## Permission matrix
 
-| Action | Owner | Editor | Viewer | No access |
+| Action | Owner | Editor | Viewer (incl. anyone with a public link) | No access |
 |---|---|---|---|---|
 | View | ✓ | ✓ | ✓ | 404 |
 | Edit content / rename | ✓ | ✓ | 403 | 404 |
 | Manage sharing | ✓ | 403 | 403 | 404 |
 | Delete | ✓ | 403 | 403 | 404 |
+
+Public ("anyone with the link") documents give every other visitor, **including signed-out ones**, the viewer role. Explicit roles always take precedence, so making a doc public never downgrades an editor. Turning public access off makes the doc 404 again for those visitors. Changing visibility doesn't bump `version`, so people with the doc open don't get a false conflict. Public docs don't appear in a visitor's "Shared with me".
 
 ## Saving and concurrency
 

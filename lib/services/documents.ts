@@ -12,6 +12,7 @@ export type DocSummary = {
   role: Role;
   ownerName: string;
   ownerEmail: string;
+  isPublic: boolean;
 };
 export type DocDetail = DocSummary & { content: DocContent; version: number };
 
@@ -23,6 +24,7 @@ const summaryCols = {
   updatedAt: documents.updatedAt,
   ownerName: users.name,
   ownerEmail: users.email,
+  isPublic: documents.isPublic,
 };
 
 export async function listDocuments(db: Db, user: User): Promise<{ owned: DocSummary[]; shared: DocSummary[] }> {
@@ -53,6 +55,7 @@ export async function listDocuments(db: Db, user: User): Promise<{ owned: DocSum
     role,
     ownerName: ownerName({ name: r.ownerName, email: r.ownerEmail }),
     ownerEmail: r.ownerEmail ?? "",
+    isPublic: r.isPublic,
   });
 
   const seen = new Set<string>();
@@ -80,6 +83,7 @@ async function loadDetail(db: Db, id: string, role: Role): Promise<DocDetail> {
     role,
     ownerName: ownerName({ name: r.ownerName, email: r.ownerEmail }),
     ownerEmail: r.ownerEmail ?? "",
+    isPublic: r.isPublic,
     content: r.content,
     version: r.version,
   };
@@ -101,7 +105,8 @@ export async function createDocument(
   return loadDetail(db, row.id, "owner");
 }
 
-export async function getDocument(db: Db, user: User, id: string): Promise<DocDetail> {
+/** `user` is null for an anonymous visitor (only public documents are visible). */
+export async function getDocument(db: Db, user: User | null, id: string): Promise<DocDetail> {
   const role = await assertCan(db, user, id, "view");
   return loadDetail(db, id, role);
 }
@@ -134,6 +139,16 @@ export async function updateDocument(
     throw new AppError("VERSION_CONFLICT", "This document was changed elsewhere. Reload to see the latest version.");
   }
   return loadDetail(db, id, role);
+}
+
+/**
+ * Owner-only: toggle "anyone with the link can view". Deliberately does NOT bump
+ * `version` — it isn't a content edit, so open editors mustn't get a false 409.
+ */
+export async function setVisibility(db: Db, user: User, id: string, isPublic: boolean): Promise<{ isPublic: boolean }> {
+  await assertCan(db, user, id, "share");
+  await db.update(documents).set({ isPublic }).where(eq(documents.id, id));
+  return { isPublic };
 }
 
 export async function deleteDocument(db: Db, user: User, id: string): Promise<void> {

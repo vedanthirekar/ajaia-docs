@@ -98,3 +98,9 @@ Format: **D-### · Date · Title**. Decision / Options / Rationale / Tradeoff.
 - **Font size and colour:** the TipTap extensions already accept any value, so the toolbar allows any size from 6 to 96 (typed, or −/+ through Google-Docs-style presets) and any colour (palette, picker, hex). Inputs are validated (`parseFontSize`, `normalizeHexColor`) so only safe style values are stored.
 - **Dashboard:** the ⋮ menu offers Share (reusing the same dialog) next to Delete, so owners don't have to open a doc to share it.
 - **Invite emails (still none):** sending to arbitrary addresses needs an email provider plus a verified domain, or the owner's personal Gmail credentials. Left as a deliberate cut; the in-app pending invite and Copy link cover the flow.
+
+### D-019 · 2026-11-21 · Public "anyone with the link can view"
+- **Decision:** `documents.is_public` (default false), toggled by the owner only (`PUT /api/documents/:id/visibility`). Public docs give everyone else the viewer role, including signed-out visitors, who get a read-only page with a "Sign in" button.
+- **Rules:** explicit roles win (making a doc public never downgrades an editor). Turning it off restores 404s. Visibility changes don't bump `version`. Public docs aren't added to anyone's "Shared with me". The proxy no longer guards `/documents/*`, because the page itself decides between rendering, a login redirect or a 404.
+- **Rationale:** a cheap, natural extension of the sharing model that's easy for reviewers to try. All access decisions still go through `lib/permissions.ts`, which is unit-tested with a null (anonymous) user.
+- **Invite emails** stay out of scope (agreed with the owner): not required by the brief.

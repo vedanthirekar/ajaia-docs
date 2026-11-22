@@ -33,6 +33,7 @@ export type EditorDoc = {
   version: number;
   role: Role;
   ownerName: string;
+  isPublic: boolean;
 };
 
 async function patchDocument(id: string, payload: SavePayload): Promise<SaveResult> {
@@ -50,7 +51,14 @@ async function patchDocument(id: string, payload: SavePayload): Promise<SaveResu
   return { ok: true, version: saved.version };
 }
 
-export function DocumentEditor({ doc, user }: { doc: EditorDoc; user: { name: string; email: string } }) {
+export function DocumentEditor({
+  doc,
+  user,
+}: {
+  doc: EditorDoc;
+  /** null for a signed-out visitor of a public document */
+  user: { name: string; email: string } | null;
+}) {
   const canEdit = doc.role !== "viewer";
   const [state, setState] = useState<SaveState>("saved");
   const [title, setTitle] = useState(doc.title);
@@ -138,15 +146,17 @@ export function DocumentEditor({ doc, user }: { doc: EditorDoc; user: { name: st
 
   return (
     <>
-      <AppHeader user={user}>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          render={<Link href="/" aria-label="Back to documents" />}
-          nativeButton={false}
-        >
-          <ArrowLeft />
-        </Button>
+      <AppHeader user={user} signInCallback={`/documents/${doc.id}`}>
+        {user && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            render={<Link href="/" aria-label="Back to documents" />}
+            nativeButton={false}
+          >
+            <ArrowLeft />
+          </Button>
+        )}
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <TitleInput value={title} editable={canEdit && !locked} onCommit={commitTitle} />
           {canEdit ? (
@@ -237,8 +247,10 @@ export function DocumentEditor({ doc, user }: { doc: EditorDoc; user: { name: st
               </Alert>
             )}
             {!canEdit && (
-              <p className="text-center text-sm text-muted-foreground">
-                You have view-only access. Shared by {doc.ownerName}.
+              <p className="text-center text-sm text-muted-foreground" data-testid="viewer-note">
+                {user
+                  ? `You have view-only access. Owner: ${doc.ownerName}.`
+                  : `You're viewing a public document by ${doc.ownerName}. Sign in if you've been given edit access.`}
               </p>
             )}
           </div>

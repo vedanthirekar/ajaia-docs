@@ -16,6 +16,8 @@ export function proxy(req: NextRequest) {
   return NextResponse.redirect(url);
 }
 
+// Only the dashboard. Document pages decide for themselves, because public
+// ("anyone with the link") documents are viewable without signing in.
 export const config = {
-  matcher: ["/", "/documents/:path*"],
+  matcher: ["/"],
 };

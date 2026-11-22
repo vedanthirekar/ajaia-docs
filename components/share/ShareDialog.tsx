@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { Check, Link2, Loader2, Share2, X } from "lucide-react";
+import { Check, Globe, Link2, Loader2, Lock, Share2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiFetch, ApiError } from "@/lib/client/api";
 import type { ShareRole, ShareView } from "@/lib/services/shares";
+import { cn } from "@/lib/utils";
 
 const ROLE_LABEL: Record<ShareRole, string> = { viewer: "Viewer", editor: "Editor" };
 
@@ -69,11 +70,14 @@ export function ShareDialog({
   const [submitting, setSubmitting] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [isPublic, setIsPublic] = useState<boolean | null>(null);
+  const [savingAccess, setSavingAccess] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      const res = await apiFetch<{ shares: ShareView[] }>(`/api/documents/${docId}/shares`);
+      const res = await apiFetch<{ shares: ShareView[]; isPublic: boolean }>(`/api/documents/${docId}/shares`);
       setShares(res.shares);
+      setIsPublic(res.isPublic);
       setLoadError(null);
     } catch (e) {
       setLoadError(e instanceof ApiError ? e.message : "Couldn't load sharing settings");
@@ -146,6 +150,23 @@ export function ShareDialog({
       toast.error(err instanceof ApiError ? err.message : "Couldn't remove access");
     } finally {
       setBusyId(null);
+    }
+  }
+
+  async function changeAccess(next: boolean) {
+    if (next === isPublic) return;
+    setSavingAccess(true);
+    try {
+      const res = await apiFetch<{ isPublic: boolean }>(`/api/documents/${docId}/visibility`, {
+        method: "PUT",
+        body: JSON.stringify({ isPublic: next }),
+      });
+      setIsPublic(res.isPublic);
+      toast.success(res.isPublic ? "Anyone with the link can now view" : "Only people with access can open it now");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Couldn't change link access");
+    } finally {
+      setSavingAccess(false);
     }
   }
 
@@ -256,6 +277,40 @@ export function ShareDialog({
               ))}
             </ul>
           )}
+        </div>
+
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium">General access</h3>
+          <div className="flex items-center gap-3 rounded-lg border px-3 py-2">
+            <span
+              className={cn(
+                "flex size-8 shrink-0 items-center justify-center rounded-full",
+                isPublic ? "bg-green-500/15 text-green-700 dark:text-green-400" : "bg-muted text-muted-foreground",
+              )}
+            >
+              {isPublic ? <Globe className="size-4" /> : <Lock className="size-4" />}
+            </span>
+            <div className="min-w-0 flex-1 text-xs text-muted-foreground">
+              {isPublic === null
+                ? "Loading…"
+                : isPublic
+                  ? "Anyone with the link can view — no sign-in needed. Only people above can edit."
+                  : "Only people added above can open this document."}
+            </div>
+            <Select
+              value={isPublic === null ? undefined : isPublic ? "public" : "restricted"}
+              onValueChange={(v) => v && void changeAccess(v === "public")}
+              disabled={isPublic === null || savingAccess}
+            >
+              <SelectTrigger className="w-40 shrink-0" aria-label="General access">
+                <SelectValue>{(v: string) => (v === "public" ? "Anyone with the link" : "Restricted")}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="restricted">Restricted</SelectItem>
+                <SelectItem value="public">Anyone with the link</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="flex flex-col-reverse items-start justify-between gap-3 border-t pt-4 sm:flex-row sm:items-center">

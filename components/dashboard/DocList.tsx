@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { FileText, MoreVertical, Share2, Trash2 } from "lucide-react";
+import { FileText, Globe, MoreVertical, Share2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -85,6 +85,15 @@ export function DocList({ docs, emptyText }: { docs: DocSummary[]; emptyText: st
                     {timeAgo(d.updatedAt)}
                   </time>
                 </span>
+                {d.isPublic && (
+                  <>
+                    <span aria-hidden>·</span>
+                    <span className="inline-flex items-center gap-1" title="Anyone with the link can view">
+                      <Globe className="size-3" />
+                      Public
+                    </span>
+                  </>
+                )}
                 {d.role !== "owner" && (
                   <>
                     <span aria-hidden>·</span>

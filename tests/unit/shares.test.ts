@@ -34,7 +34,7 @@ describe("shares service", () => {
     const bob = await createUserWithPassword(db, { name: "Bob", email: "bob@example.com", password: "12345678" });
     const list = await listDocuments(db, bob);
     expect(list.shared.map((x) => [x.id, x.role])).toEqual([[d.id, "viewer"]]);
-    expect((await listShares(db, a, d.id))[0].status).toBe("active");
+    expect((await listShares(db, a, d.id)).shares[0].status).toBe("active");
   });
 
   it("rejects sharing with yourself (SELF_SHARE)", async () => {

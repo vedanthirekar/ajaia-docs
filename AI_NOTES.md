@@ -36,7 +36,7 @@
 
 ## How I verified correctness, UX quality and reliability
 
-- **128 unit/integration tests** run real SQL against a fresh in-memory Postgres per test. No database mocks.
+- **137 unit/integration tests** run real SQL against a fresh in-memory Postgres per test. No database mocks.
 - **Test-first:** every service and pure module had its test written and seen failing before the implementation.
 - **Mutation check on the riskiest E2E assertion:** I disabled the flush-on-pagehide code and confirmed the "reload right after typing" test fails, then restored it.
 - **Manual end-to-end passes in a real browser** across two accounts: formatting round-trip, rename, conflict banner (simulated second tab), viewer read-only mode, editor rename allowed / delete forbidden, role downgrade, revoke → 404, self-share and duplicate-share errors, and 375 px mobile layout.

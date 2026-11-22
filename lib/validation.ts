@@ -59,6 +59,8 @@ export const createShareSchema = z.object({ email: emailSchema, role: shareRoleS
 
 export const updateShareSchema = z.object({ role: shareRoleSchema });
 
+export const visibilitySchema = z.object({ isPublic: z.boolean({ error: "isPublic must be true or false" }) });
+
 /** Parse or throw AppError(VALIDATION) carrying the first issue's message. */
 export function parseOrThrow<T extends z.ZodType>(schema: T, input: unknown): z.infer<T> {
   const r = schema.safeParse(input);

@@ -44,9 +44,14 @@ async function loadShareViews(db: Db, docId: string, shareId?: string): Promise<
   }));
 }
 
-export async function listShares(db: Db, user: User, docId: string): Promise<ShareView[]> {
+export async function listShares(
+  db: Db,
+  user: User,
+  docId: string,
+): Promise<{ shares: ShareView[]; isPublic: boolean }> {
   await assertCan(db, user, docId, "share");
-  return loadShareViews(db, docId);
+  const [doc] = await db.select({ isPublic: documents.isPublic }).from(documents).where(eq(documents.id, docId));
+  return { shares: await loadShareViews(db, docId), isPublic: doc?.isPublic ?? false };
 }
 
 export async function createShare(

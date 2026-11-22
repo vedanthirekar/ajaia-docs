@@ -99,6 +99,40 @@ test("create, format, persist, share as viewer, and enforce read-only access", a
   });
   expect(res.status()).toBe(403);
 
+  // --- Public link: anyone with the link can view, even signed out ---
+  const anonCtx = await browser.newContext();
+  const anon = await anonCtx.newPage();
+  await anon.goto(docUrl);
+  await expect(anon).toHaveURL(/\/login/); // private by default
+
+  await a.goto(docUrl);
+  await a.getByRole("button", { name: "Share" }).first().click();
+  const shareDialog = a.getByRole("dialog");
+  await shareDialog.getByRole("combobox", { name: "General access" }).click();
+  await a.getByRole("option", { name: "Anyone with the link" }).click();
+  await expect(shareDialog.getByText(/Anyone with the link can view/)).toBeVisible();
+  await a.keyboard.press("Escape");
+
+  await anon.goto(docUrl);
+  await expect(editor(anon).locator("h1")).toHaveText("Project Kickoff");
+  await expect(editor(anon)).toHaveAttribute("contenteditable", "false");
+  await expect(anon.getByRole("toolbar", { name: "Formatting" })).toHaveCount(0);
+  await expect(anon.getByRole("link", { name: "Sign in" })).toBeVisible();
+  const anonWrite = await anon.request.patch(docUrl.replace("/documents/", "/api/documents/"), {
+    data: { title: "anon", version: 1 },
+  });
+  expect(anonWrite.status()).toBe(401);
+
+  // Turning it back off removes anonymous access.
+  await a.getByRole("button", { name: "Share" }).first().click();
+  await shareDialog.getByRole("combobox", { name: "General access" }).click();
+  await a.getByRole("option", { name: "Restricted" }).click();
+  await expect(shareDialog.getByText(/Only people added above/)).toBeVisible();
+  await a.keyboard.press("Escape");
+  await anon.goto(docUrl);
+  await expect(anon).toHaveURL(/\/login/);
+  await anonCtx.close();
+
   // --- Account menu shows who's signed in and signs out ---
   await b.goto("/");
   await b.getByRole("button", { name: /Account menu for Bob E2E/ }).click();

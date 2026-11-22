@@ -25,38 +25,48 @@ export function isUuid(id: string): boolean {
 }
 
 /**
- * Resolve the user's role on a document. Shares match by user id OR by email,
- * so a pending invite grants access even before it is claimed.
+ * Resolve a user's role on a document. Shares match by user id OR by email, so a
+ * pending invite grants access before it is claimed. A public ("anyone with the
+ * link") document gives everyone else — including anonymous visitors (`user` null)
+ * — the viewer role; explicit roles always win.
  */
-export async function getRole(db: Db, user: SessionUser, docId: string): Promise<Role | null> {
+export async function getRole(db: Db, user: SessionUser | null, docId: string): Promise<Role | null> {
   if (!isUuid(docId)) return null;
 
   const [doc] = await db
-    .select({ ownerId: documents.ownerId })
+    .select({ ownerId: documents.ownerId, isPublic: documents.isPublic })
     .from(documents)
     .where(eq(documents.id, docId))
     .limit(1);
   if (!doc) return null;
-  if (doc.ownerId === user.id) return "owner";
 
-  const [share] = await db
-    .select({ role: documentShares.role })
-    .from(documentShares)
-    .where(
-      and(
-        eq(documentShares.documentId, docId),
-        or(eq(documentShares.userId, user.id), eq(documentShares.email, user.email.toLowerCase())),
-      ),
-    )
-    .limit(1);
-  return share?.role ?? null;
+  if (user) {
+    if (doc.ownerId === user.id) return "owner";
+    const [share] = await db
+      .select({ role: documentShares.role })
+      .from(documentShares)
+      .where(
+        and(
+          eq(documentShares.documentId, docId),
+          or(eq(documentShares.userId, user.id), eq(documentShares.email, user.email.toLowerCase())),
+        ),
+      )
+      .limit(1);
+    if (share) return share.role;
+  }
+  return doc.isPublic ? "viewer" : null;
 }
 
 /**
  * Throws NOT_FOUND when the user has no access at all (hides existence),
  * FORBIDDEN when they have a role that doesn't permit the action.
  */
-export async function assertCan(db: Db, user: SessionUser, docId: string, action: Action): Promise<Role> {
+export async function assertCan(
+  db: Db,
+  user: SessionUser | null,
+  docId: string,
+  action: Action,
+): Promise<Role> {
   const role = await getRole(db, user, docId);
   if (role === null) throw new AppError("NOT_FOUND", "Document not found");
   if (!can(role, action)) {

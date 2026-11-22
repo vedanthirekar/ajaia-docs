@@ -77,3 +77,12 @@ describe("createShareSchema", () => {
     expect(createShareSchema.parse({ email: " A@x.com", role: "editor" })).toEqual({ email: "a@x.com", role: "editor" });
   });
 });
+
+describe("visibilitySchema", () => {
+  it("requires a boolean", async () => {
+    const { visibilitySchema } = await import("@/lib/validation");
+    expect(visibilitySchema.safeParse({ isPublic: true }).success).toBe(true);
+    expect(visibilitySchema.safeParse({ isPublic: "yes" }).success).toBe(false);
+    expect(visibilitySchema.safeParse({}).success).toBe(false);
+  });
+});

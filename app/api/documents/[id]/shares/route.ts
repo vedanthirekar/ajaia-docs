@@ -9,7 +9,7 @@ export async function GET(_req: Request, { params }: Ctx) {
   return handle(async () => {
     const user = await requireUser();
     const { id } = await params;
-    return Response.json({ shares: await listShares(getDb(), user, id) });
+    return Response.json(await listShares(getDb(), user, id));
   });
 }
 
