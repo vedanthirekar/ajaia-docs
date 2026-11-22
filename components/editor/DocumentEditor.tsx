@@ -1,15 +1,21 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { EditorContent, useEditor, type JSONContent } from "@tiptap/react";
 import Placeholder from "@tiptap/extension-placeholder";
-import { AlertTriangle, ArrowLeft, Copy, Eye, RotateCw } from "lucide-react";
+import { AlertTriangle, Copy, Ellipsis, Eye, Link2, Printer, RotateCw } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { AppHeader } from "@/components/AppHeader";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { UserMenu } from "@/components/UserMenu";
 import { ShareDialog } from "@/components/share/ShareDialog";
 import type { DocContent } from "@/lib/db/schema";
 import { buildEditorExtensions } from "@/lib/editor/extensions";
@@ -21,6 +27,7 @@ import {
   type SaveResult,
   type SaveState,
 } from "@/lib/editor/saveQueue";
+import { timeAgo } from "@/lib/format";
 import type { Role } from "@/lib/permissions";
 import { SaveStatus } from "./SaveStatus";
 import { TitleInput } from "./TitleInput";
@@ -34,6 +41,7 @@ export type EditorDoc = {
   role: Role;
   ownerName: string;
   isPublic: boolean;
+  updatedAt: Date | string;
 };
 
 async function patchDocument(id: string, payload: SavePayload): Promise<SaveResult> {
@@ -62,6 +70,7 @@ export function DocumentEditor({
   const canEdit = doc.role !== "viewer";
   const [state, setState] = useState<SaveState>("saved");
   const [title, setTitle] = useState(doc.title);
+  const [lastEdited, setLastEdited] = useState(() => new Date(doc.updatedAt));
   // The queue's lifetime is owned by the effect below (NOT useMemo): React Strict
   // Mode mounts → unmounts → remounts effects in dev, and a memoized queue would be
   // disposed by the first cleanup and then silently reused, dropping every edit.
@@ -96,7 +105,10 @@ export function DocumentEditor({
     const queue = createSaveQueue({
       initialVersion: doc.version,
       save: (payload) => patchDocument(doc.id, payload),
-      onState: setState,
+      onState: (next) => {
+        setState(next);
+        if (next === "saved") setLastEdited(new Date());
+      },
     });
     queueRef.current = queue;
 
@@ -134,6 +146,15 @@ export function DocumentEditor({
     void queueRef.current?.flush();
   };
 
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/documents/${doc.id}`);
+      toast.success("Link copied");
+    } catch {
+      toast.error("Couldn't access the clipboard");
+    }
+  };
+
   const copyText = async () => {
     if (!editor) return;
     try {
@@ -146,34 +167,75 @@ export function DocumentEditor({
 
   return (
     <>
-      <AppHeader user={user} signInCallback={`/documents/${doc.id}`}>
-        {user && (
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            render={<Link href="/" aria-label="Back to documents" />}
-            nativeButton={false}
-          >
-            <ArrowLeft />
-          </Button>
-        )}
-        <div className="flex min-w-0 flex-1 items-center gap-2">
+      {/* Editor header (spec: 60px, full width, logo as back link, title + status under it) */}
+      <header className="sticky top-0 z-30 flex h-[60px] items-center gap-3.5 border-b border-line bg-surface px-4 sm:px-5 print:hidden">
+        <Link
+          href="/"
+          aria-label={user ? "Back to documents" : "Ajaia Docs home"}
+          className="flex shrink-0 rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          <Image src="/logo.png" alt="" width={30} height={30} priority />
+        </Link>
+        <div className="min-w-0 flex-1">
           <TitleInput value={title} editable={canEdit && !locked} onCommit={commitTitle} />
-          {canEdit ? (
-            <SaveStatus state={state} />
-          ) : (
-            <Badge variant="outline" className="shrink-0 gap-1" data-testid="view-only">
-              <Eye className="size-3" />
-              View only
-            </Badge>
-          )}
+          <div className="mt-0.5 flex items-center gap-1.5 text-xs text-meta">
+            {canEdit ? (
+              <SaveStatus state={state} />
+            ) : (
+              <span className="inline-flex items-center gap-1.5" data-testid="view-only">
+                <Eye className="size-3" aria-hidden />
+                View only
+              </span>
+            )}
+            {user && (
+              <>
+                <span aria-hidden>·</span>
+                <Link href="/" className="hover:text-ink hover:underline">
+                  Documents
+                </Link>
+              </>
+            )}
+          </div>
         </div>
         {doc.role === "owner" && <ShareDialog docId={doc.id} docTitle={title} />}
-      </AppHeader>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <button
+                type="button"
+                aria-label="More"
+                className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-field bg-surface text-ink-2 outline-none hover:bg-cream hover:text-ink focus-visible:ring-3 focus-visible:ring-ring/50"
+              />
+            }
+          >
+            <Ellipsis className="size-4" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={copyLink}>
+              <Link2 />
+              Copy link
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => window.print()}>
+              <Printer />
+              Print (A4)
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        {user ? (
+          <UserMenu name={user.name} email={user.email} />
+        ) : (
+          <Link
+            href={`/login?callbackUrl=${encodeURIComponent(`/documents/${doc.id}`)}`}
+            className={buttonVariants({ variant: "ink-outline", size: "sm" })}
+          >
+            Sign in
+          </Link>
+        )}
+      </header>
 
-      <div className="mx-auto w-full max-w-[880px] flex-1 px-2 pb-24 sm:px-4 print:max-w-none print:p-0">
+      <div className="mx-auto w-full max-w-[1000px] flex-1 px-2 pb-24 sm:px-4 print:max-w-none print:p-0">
         {(locked || !canEdit) && (
-          <div className="mt-4 space-y-3 print:hidden">
+          <div className="mx-auto mt-4 max-w-[210mm] space-y-3 print:hidden">
             {state === "conflict" && (
               <Alert variant="destructive" data-testid="conflict-banner">
                 <AlertTriangle />
@@ -257,7 +319,7 @@ export function DocumentEditor({
         )}
 
         {canEdit && editor && !locked && (
-          <div className="sticky top-14 z-20 -mx-1 bg-muted/40 px-1 pt-3 pb-2 backdrop-blur print:hidden">
+          <div className="sticky top-[60px] z-20 -mx-2 bg-cream/90 px-2 pt-3.5 pb-2 backdrop-blur-sm print:hidden">
             <Toolbar editor={editor} />
           </div>
         )}
@@ -265,8 +327,14 @@ export function DocumentEditor({
         {/* A4 sheet: 210 × 297 mm with Word's default 2.54 cm margins. Printing uses @page A4 (globals.css). */}
         <article
           data-testid="page"
-          className="doc-page mx-auto mt-3 w-full max-w-[210mm] min-h-[297mm] rounded-sm border bg-background px-5 py-8 shadow-sm sm:px-[25.4mm] sm:py-[25.4mm] print:m-0 print:min-h-0 print:max-w-none print:border-0 print:p-0 print:shadow-none"
+          className="doc-page mx-auto mt-3 w-full max-w-[210mm] min-h-[297mm] rounded-[6px] border border-card-border bg-page px-6 py-10 sm:px-[25.4mm] sm:py-[25.4mm] print:m-0 print:min-h-0 print:max-w-none print:border-0 print:p-0"
         >
+          <p className="mb-7 text-[13px] text-meta print:hidden">
+            {doc.ownerName} · Last edited{" "}
+            <time dateTime={lastEdited.toISOString()} suppressHydrationWarning>
+              {timeAgo(lastEdited)}
+            </time>
+          </p>
           {editor ? (
             <EditorContent editor={editor} />
           ) : (

@@ -47,6 +47,15 @@ describe("document schema (shared by editor and import)", () => {
     expect(types.has("horizontalRule")).toBe(true);
   });
 
+  it("keeps checklists with their checked state", () => {
+    const doc = parse(
+      '<ul data-type="taskList"><li data-type="taskItem" data-checked="true"><p>done</p></li><li data-type="taskItem" data-checked="false"><p>todo</p></li></ul>',
+    );
+    const items = walk(doc).filter((n) => n.type === "taskItem");
+    expect(walk(doc).some((n) => n.type === "taskList")).toBe(true);
+    expect(items.map((i) => i.attrs?.checked)).toEqual([true, false]);
+  });
+
   it("round-trips the new formats through HTML rendering", () => {
     const doc = parse('<p style="text-align: center"><span style="color: #2563eb">blue</span> <mark>hl</mark></p>');
     const html = generateHTML(doc, editorExtensions);

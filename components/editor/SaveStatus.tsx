@@ -1,33 +1,32 @@
 "use client";
 
-import { AlertTriangle, Check, CloudOff, Loader2, PencilLine } from "lucide-react";
 import type { SaveState } from "@/lib/editor/saveQueue";
 import { cn } from "@/lib/utils";
 
-const COPY: Record<SaveState, { text: string; icon: typeof Check; className?: string }> = {
-  saved: { text: "Saved", icon: Check },
-  dirty: { text: "Unsaved changes", icon: PencilLine },
-  saving: { text: "Saving…", icon: Loader2, className: "[&_svg]:animate-spin" },
-  error: { text: "Connection problem — retrying", icon: CloudOff, className: "text-amber-600 dark:text-amber-500" },
-  conflict: { text: "Not saved", icon: AlertTriangle, className: "text-destructive" },
-  forbidden: { text: "Not saved", icon: AlertTriangle, className: "text-destructive" },
-  unauthenticated: { text: "Not saved", icon: AlertTriangle, className: "text-destructive" },
-  rejected: { text: "Not saved", icon: AlertTriangle, className: "text-destructive" },
+/** Spec: 6px dot + label in 12px muted text under the document title. */
+const COPY: Record<SaveState, { text: string; dot: string; text_class?: string }> = {
+  saved: { text: "Saved", dot: "bg-saved" },
+  dirty: { text: "Unsaved changes", dot: "bg-meta" },
+  saving: { text: "Saving…", dot: "bg-ink-2 animate-pulse" },
+  error: { text: "Connection problem — retrying", dot: "bg-amber-500 animate-pulse", text_class: "text-amber-700" },
+  conflict: { text: "Not saved", dot: "bg-destructive", text_class: "text-destructive" },
+  forbidden: { text: "Not saved", dot: "bg-destructive", text_class: "text-destructive" },
+  unauthenticated: { text: "Not saved", dot: "bg-destructive", text_class: "text-destructive" },
+  rejected: { text: "Not saved", dot: "bg-destructive", text_class: "text-destructive" },
 };
 
 export function SaveStatus({ state }: { state: SaveState }) {
   const c = COPY[state];
-  const Icon = c.icon;
   return (
     <span
       role="status"
       aria-live="polite"
       data-testid="save-status"
       data-state={state}
-      className={cn("flex shrink-0 items-center gap-1.5 text-xs whitespace-nowrap text-muted-foreground", c.className)}
+      className={cn("inline-flex items-center gap-1.5 whitespace-nowrap", c.text_class)}
     >
-      <Icon className="size-3.5" />
-      <span className="hidden sm:inline">{c.text}</span>
+      <span aria-hidden className={cn("size-1.5 shrink-0 rounded-full", c.dot)} />
+      {c.text}
     </span>
   );
 }

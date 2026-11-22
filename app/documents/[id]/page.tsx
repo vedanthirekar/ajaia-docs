@@ -44,6 +44,7 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
         role: doc.role,
         ownerName: doc.ownerName,
         isPublic: doc.isPublic,
+        updatedAt: doc.updatedAt,
       }}
       user={user}
     />

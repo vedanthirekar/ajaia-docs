@@ -9,19 +9,15 @@ import {
   AlignLeft,
   AlignRight,
   Baseline,
-  Bold,
-  Highlighter,
-  Italic,
   Link2,
   List,
+  ListChecks,
   ListOrdered,
   Minus,
   Plus,
   SeparatorHorizontal,
-  Quote,
   Redo2,
   Strikethrough,
-  Underline,
   Undo2,
   type LucideIcon,
 } from "lucide-react";
@@ -29,7 +25,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   COLOR_PALETTE,
@@ -62,15 +57,22 @@ const ALIGNMENTS: { value: "left" | "center" | "right" | "justify"; icon: Lucide
 
 const keepSelection = (e: React.MouseEvent) => e.preventDefault();
 
+/** Spec: 34×32 icon buttons, 7px radius; active tool gets a sky fill. */
+const TOOL_BTN =
+  "inline-flex h-8 w-[34px] shrink-0 items-center justify-center rounded-[7px] text-ink-2 outline-none transition-colors hover:bg-cream hover:text-ink focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-40 aria-pressed:bg-sky aria-pressed:text-ink [&_svg]:size-4";
+
 function ToolButton({
   icon: Icon,
+  glyph,
   label,
   shortcut,
   active,
   disabled,
   onClick,
 }: {
-  icon: LucideIcon;
+  icon?: LucideIcon;
+  /** Text glyph instead of an icon (e.g. a bold "B"), per the design spec. */
+  glyph?: React.ReactNode;
   label: string;
   shortcut?: string;
   active?: boolean;
@@ -81,20 +83,18 @@ function ToolButton({
     <Tooltip>
       <TooltipTrigger
         render={
-          <Button
+          <button
             type="button"
-            variant="ghost"
-            size="icon-sm"
             aria-label={label}
-            aria-pressed={active}
+            aria-pressed={active ?? undefined}
             disabled={disabled}
             onMouseDown={keepSelection}
             onClick={onClick}
-            className={cn(active && "bg-primary/10 text-primary hover:bg-primary/15")}
+            className={TOOL_BTN}
           />
         }
       >
-        <Icon />
+        {glyph ?? (Icon ? <Icon strokeWidth={1.8} /> : null)}
       </TooltipTrigger>
       <TooltipContent>
         {label}
@@ -104,7 +104,7 @@ function ToolButton({
   );
 }
 
-const Divider = () => <Separator orientation="vertical" className="mx-1 h-5!" />;
+const Divider = () => <span aria-hidden className="mx-1.5 h-5 w-px shrink-0 bg-field" />;
 
 function ColorPicker({ editor, current }: { editor: Editor; current: string | null }) {
   const [open, setOpen] = useState(false);
@@ -142,7 +142,7 @@ function ColorPicker({ editor, current }: { editor: Editor; current: string | nu
     >
       <PopoverTrigger
         render={
-          <Button type="button" variant="ghost" size="icon-sm" aria-label="Text colour" title="Text colour" onMouseDown={keepSelection} />
+          <button type="button" aria-label="Text colour" title="Text colour" onMouseDown={keepSelection} className={TOOL_BTN} />
         }
       >
         <span className="flex flex-col items-center">
@@ -255,7 +255,7 @@ function FontSizeControl({ editor, current }: { editor: Editor; current: number 
           if (n === null || n === current) setDraft(String(current));
           else apply(n);
         }}
-        className="h-7 w-11 rounded-md border bg-background text-center text-sm tabular-nums outline-none focus:border-ring focus:ring-3 focus:ring-ring/30"
+        className="h-7 w-11 rounded-md border border-field bg-surface text-center text-[13px] tabular-nums outline-none focus:border-ink-2 focus:ring-3 focus:ring-ring/20 [&::-webkit-calendar-picker-indicator]:hidden"
       />
       <datalist id="font-size-presets">
         {FONT_SIZE_PRESETS.map((p) => (
@@ -310,19 +310,17 @@ function LinkEditor({ editor, active }: { editor: Editor; active: boolean }) {
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger
         render={
-          <Button
+          <button
             type="button"
-            variant="ghost"
-            size="icon-sm"
             aria-label="Link"
             title="Link"
             aria-pressed={active}
             onMouseDown={keepSelection}
-            className={cn(active && "bg-primary/10 text-primary hover:bg-primary/15")}
+            className={TOOL_BTN}
           />
         }
       >
-        <Link2 />
+        <Link2 strokeWidth={1.8} />
       </PopoverTrigger>
       <PopoverContent align="start" className="w-80">
         <form onSubmit={apply} className="space-y-2" noValidate>
@@ -374,6 +372,7 @@ export function Toolbar({ editor }: { editor: Editor }) {
       bulletList: e.isActive("bulletList"),
       orderedList: e.isActive("orderedList"),
       blockquote: e.isActive("blockquote"),
+      taskList: e.isActive("taskList"),
       align: (["center", "right", "justify"] as const).find((a) => e.isActive({ textAlign: a })) ?? "left",
       color: (e.getAttributes("textStyle").color as string | undefined) ?? null,
       fontSize: parseFontSize((e.getAttributes("textStyle").fontSize as string | undefined) ?? "") ?? DEFAULT_FONT_SIZE,
@@ -399,14 +398,18 @@ export function Toolbar({ editor }: { editor: Editor }) {
     <div
       role="toolbar"
       aria-label="Formatting"
-      className="flex items-center gap-0.5 overflow-x-auto rounded-lg border bg-background px-1.5 py-1 shadow-xs [scrollbar-width:thin]"
+      className="flex flex-wrap items-center justify-center gap-0.5 rounded-xl border border-field bg-surface p-1"
     >
       <ToolButton icon={Undo2} label="Undo" shortcut={`${mod}Z`} disabled={!s.canUndo} onClick={() => editor.chain().focus().undo().run()} />
       <ToolButton icon={Redo2} label="Redo" shortcut={isMac ? "⇧⌘Z" : "Ctrl+Y"} disabled={!s.canRedo} onClick={() => editor.chain().focus().redo().run()} />
       <Divider />
 
       <Select value={s.block} onValueChange={(v) => v && setBlock(v as BlockStyle)}>
-        <SelectTrigger size="sm" className="w-34 shrink-0 border-transparent shadow-none" aria-label="Text style">
+        <SelectTrigger
+          size="sm"
+          className="h-8 w-auto min-w-28 shrink-0 gap-1.5 rounded-[7px] border-0 bg-transparent px-2.5 text-[13px] font-medium text-ink shadow-none hover:bg-cream dark:bg-transparent"
+          aria-label="Text style"
+        >
           <SelectValue>{(v: BlockStyle) => BLOCK_LABELS[v]}</SelectValue>
         </SelectTrigger>
         <SelectContent>
@@ -414,9 +417,10 @@ export function Toolbar({ editor }: { editor: Editor }) {
             <SelectItem key={k} value={k}>
               <span
                 className={cn(
-                  k === "h1" && "text-lg font-bold",
-                  k === "h2" && "text-base font-semibold",
-                  k === "h3" && "font-semibold",
+                  k !== "paragraph" && "font-display font-medium",
+                  k === "h1" && "text-xl",
+                  k === "h2" && "text-lg",
+                  k === "h3" && "text-base",
                 )}
               >
                 {BLOCK_LABELS[k]}
@@ -425,18 +429,29 @@ export function Toolbar({ editor }: { editor: Editor }) {
           ))}
         </SelectContent>
       </Select>
-
-      <Divider />
       <FontSizeControl editor={editor} current={s.fontSize} />
       <Divider />
 
-      <ToolButton icon={Bold} label="Bold" shortcut={`${mod}B`} active={s.bold} onClick={() => editor.chain().focus().toggleBold().run()} />
-      <ToolButton icon={Italic} label="Italic" shortcut={`${mod}I`} active={s.italic} onClick={() => editor.chain().focus().toggleItalic().run()} />
-      <ToolButton icon={Underline} label="Underline" shortcut={`${mod}U`} active={s.underline} onClick={() => editor.chain().focus().toggleUnderline().run()} />
+      <ToolButton glyph={<span className="text-sm font-bold">B</span>} label="Bold" shortcut={`${mod}B`} active={s.bold} onClick={() => editor.chain().focus().toggleBold().run()} />
+      <ToolButton glyph={<span className="font-display text-[15px] font-medium italic">I</span>} label="Italic" shortcut={`${mod}I`} active={s.italic} onClick={() => editor.chain().focus().toggleItalic().run()} />
+      <ToolButton glyph={<span className="text-sm font-medium underline underline-offset-2">U</span>} label="Underline" shortcut={`${mod}U`} active={s.underline} onClick={() => editor.chain().focus().toggleUnderline().run()} />
       <ToolButton icon={Strikethrough} label="Strikethrough" shortcut={isMac ? "⇧⌘S" : "Ctrl+Shift+S"} active={s.strike} onClick={() => editor.chain().focus().toggleStrike().run()} />
       <ColorPicker editor={editor} current={s.color} />
-      <ToolButton icon={Highlighter} label="Highlight" shortcut={isMac ? "⇧⌘H" : "Ctrl+Shift+H"} active={s.highlight} onClick={() => editor.chain().focus().toggleHighlight().run()} />
+      <ToolButton
+        glyph={<span className="rounded-[3px] bg-butter px-1 text-sm font-semibold text-ink">A</span>}
+        label="Highlight"
+        shortcut={isMac ? "⇧⌘H" : "Ctrl+Shift+H"}
+        active={s.highlight}
+        onClick={() => editor.chain().focus().toggleHighlight().run()}
+      />
+      <Divider />
+
+      <ToolButton icon={List} label="Bulleted list" shortcut={isMac ? "⇧⌘8" : "Ctrl+Shift+8"} active={s.bulletList} onClick={() => editor.chain().focus().toggleBulletList().run()} />
+      <ToolButton icon={ListOrdered} label="Numbered list" shortcut={isMac ? "⇧⌘7" : "Ctrl+Shift+7"} active={s.orderedList} onClick={() => editor.chain().focus().toggleOrderedList().run()} />
+      <ToolButton icon={ListChecks} label="Checklist" shortcut={isMac ? "⇧⌘9" : "Ctrl+Shift+9"} active={s.taskList} onClick={() => editor.chain().focus().toggleTaskList().run()} />
       <LinkEditor editor={editor} active={s.link} />
+      <ToolButton glyph={<span className="font-display text-xl leading-none">“</span>} label="Quote" shortcut={isMac ? "⇧⌘B" : "Ctrl+Shift+B"} active={s.blockquote} onClick={() => editor.chain().focus().toggleBlockquote().run()} />
+      <ToolButton icon={SeparatorHorizontal} label="Divider line" onClick={() => editor.chain().focus().setHorizontalRule().run()} />
       <Divider />
 
       {ALIGNMENTS.map((a) => (
@@ -449,12 +464,6 @@ export function Toolbar({ editor }: { editor: Editor }) {
           onClick={() => editor.chain().focus().setTextAlign(a.value).run()}
         />
       ))}
-      <Divider />
-
-      <ToolButton icon={List} label="Bulleted list" shortcut={isMac ? "⇧⌘8" : "Ctrl+Shift+8"} active={s.bulletList} onClick={() => editor.chain().focus().toggleBulletList().run()} />
-      <ToolButton icon={ListOrdered} label="Numbered list" shortcut={isMac ? "⇧⌘7" : "Ctrl+Shift+7"} active={s.orderedList} onClick={() => editor.chain().focus().toggleOrderedList().run()} />
-      <ToolButton icon={Quote} label="Quote" shortcut={isMac ? "⇧⌘B" : "Ctrl+Shift+B"} active={s.blockquote} onClick={() => editor.chain().focus().toggleBlockquote().run()} />
-      <ToolButton icon={SeparatorHorizontal} label="Divider line" onClick={() => editor.chain().focus().setHorizontalRule().run()} />
     </div>
   );
 }

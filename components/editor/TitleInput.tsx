@@ -23,7 +23,7 @@ export function TitleInput({
 
   if (!editable) {
     return (
-      <h1 className="truncate text-base font-medium" title={value}>
+      <h1 className="truncate font-display text-lg leading-[1.1] font-medium" title={value}>
         {value}
       </h1>
     );
@@ -62,7 +62,7 @@ export function TitleInput({
       onChange={(e) => setDraft(e.target.value)}
       onBlur={commit}
       onKeyDown={onKeyDown}
-      className="h-8 w-full min-w-0 max-w-md truncate rounded-md border border-transparent bg-transparent px-2 text-base font-medium outline-none hover:border-border focus:border-ring focus:ring-3 focus:ring-ring/30"
+      className="-ml-1.5 h-7 w-full min-w-0 max-w-md truncate rounded-md border border-transparent bg-transparent px-1.5 font-display text-lg leading-[1.1] font-medium outline-none hover:border-field focus:border-ink-2 focus:ring-3 focus:ring-ring/20"
     />
   );
 }

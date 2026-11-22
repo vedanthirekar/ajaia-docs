@@ -1,4 +1,5 @@
 import Highlight from "@tiptap/extension-highlight";
+import { TaskItem, TaskList } from "@tiptap/extension-list";
 import TextAlign from "@tiptap/extension-text-align";
 import { Color, FontSize, TextStyle } from "@tiptap/extension-text-style";
 import StarterKit from "@tiptap/starter-kit";
@@ -21,6 +22,8 @@ export function buildEditorExtensions({ editable = true }: { editable?: boolean 
     TextStyle,
     Color,
     FontSize,
+    TaskList,
+    TaskItem.configure({ nested: true }),
   ];
 }
 

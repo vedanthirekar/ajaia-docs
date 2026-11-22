@@ -20,6 +20,7 @@
     "@neondatabase/serverless": "^1.2.1",
     "@tiptap/core": "^3.35.0",
     "@tiptap/extension-highlight": "^3.35.0",
+    "@tiptap/extension-list": "^3.35.0",
     "@tiptap/extension-placeholder": "^3.35.0",
     "@tiptap/extension-text-align": "^3.35.0",
     "@tiptap/extension-text-style": "^3.35.0",

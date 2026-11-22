@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { Check, Globe, Link2, Loader2, Lock, Share2, X } from "lucide-react";
+import { Check, Globe, Link2, Loader2, Lock, SquareArrowRight, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -183,9 +183,11 @@ export function ShareDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {!hideTrigger && (
-        <DialogTrigger render={<Button size="sm" />}>
-          <Share2 />
-          Share
+        <DialogTrigger
+          render={<Button variant="primary" size="cta" className="h-[38px] px-3 sm:px-4" aria-label="Share" />}
+        >
+          <SquareArrowRight strokeWidth={1.8} />
+          <span className="hidden sm:inline">Share</span>
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-lg">
