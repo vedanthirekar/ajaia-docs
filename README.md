@@ -3,7 +3,7 @@
 A lightweight document editor: write formatted documents, import files, and share them with other people.
 
 **Live app:** https://ajaia-docs-one-omega.vercel.app
-**More detail:** [ARCHITECTURE.md](ARCHITECTURE.md) (how it works) · [AI_NOTES.md](AI_NOTES.md) (how I used AI) · [decisions.md](decisions.md) (every decision and why) · [screenshots](docs/screenshots/)
+**More detail:** [ARCHITECTURE.md](ARCHITECTURE.md) (how it works) · [AI_NOTES.md](AI_NOTES.md) (how I used AI) · [decisions.md](decisions.md) (key decisions and tradeoffs) · [screenshots](docs/screenshots/)
 
 ## Try it in 30 seconds
 

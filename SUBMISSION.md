@@ -19,7 +19,7 @@
 | This list | `SUBMISSION.md` |
 | Video link | `VIDEO_URL.txt` |
 | Screenshots of the live app | `screenshots/` (login, dashboard, editor, share dialog, shared-with-me, view-only, public link) |
-| Extra: every decision and why | `decisions.md` |
+| Extra: the 7 key decisions and tradeoffs | `decisions.md` |
 
 ## Scope
 

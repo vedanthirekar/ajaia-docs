@@ -7,7 +7,7 @@
 
 ## How I worked
 
-1. **Decided the scope myself first.** The AI asked me questions (stack, login method, upload behaviour, sharing rules) and I made the product calls. They're all logged in `decisions.md`.
+1. **Decided the scope myself first.** The AI asked me questions (stack, login method, upload behaviour, sharing rules) and I made the product calls. The key ones are in `decisions.md`.
 2. **Spec → plan → tests first.** A short design doc became a 14-task plan. For each piece of logic, the test was written and seen failing before the code existed.
 3. **Checked the installed docs, not memory.** Next.js 16 changed several things the AI might otherwise have got wrong (e.g. `middleware` → `proxy.ts`).
 
