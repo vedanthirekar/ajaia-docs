@@ -31,11 +31,12 @@
 | A single PGlite instance per module | **Bug caught in browser testing:** Next dev loads route handlers and pages as separate module copies, which created two embedded DB instances that didn't see each other's writes (a shared doc was missing from the dashboard). Fixed with a process-wide singleton. |
 | `auth()` wrapper exported as the proxy | Didn't match Next 16's required export shape. Replaced with a cookie-presence redirect, and kept real checks server-side. |
 | Import limited only by file size | Gap found while writing tests: a 1.8 MB `.txt` would import but then exceed the 1 MB save limit, so the doc could never be saved. Added a converted-size check, and wrote a test that I watched fail first. |
+| My own "safe" calls, challenged by an independent AI code review | A fresh reviewer agent found four real issues I then fixed test-first: a tab-character open-redirect bypass (`/	/evil.com`), unsafe Google↔password account auto-linking (pre-account takeover), UTF-16/binary uploads causing a 500, and unload saves that silently failed for docs over 64 KiB. I also re-graded "401 retries forever" from minor to must-fix, because the user would keep typing into a doc that can't save. |
 | A test with an escaped backslash | A shell heredoc collapsed `\\` and the open-redirect test checked the wrong input. Caught because the test failed for the wrong reason. Fixed the test, not the code. |
 
 ## How I verified correctness, UX quality and reliability
 
-- **96 unit/integration tests** run real SQL against a fresh in-memory Postgres per test. No database mocks.
+- **110 unit/integration tests** run real SQL against a fresh in-memory Postgres per test. No database mocks.
 - **Test-first:** every service and pure module had its test written and seen failing before the implementation.
 - **Mutation check on the riskiest E2E assertion:** I disabled the flush-on-pagehide code and confirmed the "reload right after typing" test fails, then restored it.
 - **Manual end-to-end passes in a real browser** across two accounts: formatting round-trip, rename, conflict banner (simulated second tab), viewer read-only mode, editor rename allowed / delete forbidden, role downgrade, revoke → 404, self-share and duplicate-share errors, and 375 px mobile layout.

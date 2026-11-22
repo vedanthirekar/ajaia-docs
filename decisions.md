@@ -77,3 +77,12 @@ Format: **D-### · Date · Title**. Decision / Options / Rationale / Tradeoff.
 ### D-014 · 2026-11-21 · Migrations are applied manually before deploy
 - **Decision:** `npm run db:migrate` runs explicitly against the production database rather than as part of the Vercel build.
 - **Rationale:** Schema changes stay a deliberate step, and preview builds can't migrate the production DB by accident.
+
+### D-015 · 2026-11-21 · Amends D-006: no automatic Google ↔ password account linking
+- **Decision:** `allowDangerousEmailAccountLinking: false`. Google sign-in for an email that already has a password account shows "sign in with your password" (Auth.js `OAuthAccountNotLinked`).
+- **Why it changed:** the final code review pointed out that D-006's safety argument looked at the wrong side. Google verifies the *Google* email, but password signups are never verified. An attacker could register `victim@gmail.com` with a password, and when the victim later used Google they'd be linked into an account whose password the attacker holds (pre-account takeover).
+- **Tradeoff:** someone who signed up with a password can't later switch to Google for the same email. Proper fix later: email verification, then link only verified accounts.
+
+### D-016 · 2026-11-21 · Import validates content, not MIME type
+- **Decision:** uploads are checked by extension plus actually decoding/parsing the content (BOM-aware text decoding that rejects binary data; mammoth for .docx). The browser-supplied MIME type is not trusted or required.
+- **Rationale:** browsers report inconsistent MIME types for `.md` (often empty or `application/octet-stream` on Windows), and the client controls that field anyway, so parsing is the stronger check. This deviates from the spec's "extension and MIME type" wording on purpose.

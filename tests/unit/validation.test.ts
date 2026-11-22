@@ -60,6 +60,10 @@ describe("updateDocSchema", () => {
     expect(r.success).toBe(false);
     expect(JSON.stringify(r.error?.issues)).toMatch(/large/i);
   });
+  it("rejects content containing NUL characters (Postgres jsonb can't store them)", () => {
+    const bad = { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "a\u0000b" }] }] };
+    expect(updateDocSchema.safeParse({ content: bad, version: 1 }).success).toBe(false);
+  });
   it("accepts valid content", () => {
     expect(updateDocSchema.safeParse({ content: doc, version: 3 }).success).toBe(true);
   });

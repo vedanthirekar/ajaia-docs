@@ -35,6 +35,10 @@ export const docContentSchema = z
   .looseObject({ type: z.literal("doc", { error: "Content must be a document" }) })
   .refine((c) => JSON.stringify(c).length <= MAX_CONTENT_CHARS, {
     error: "Document is too large (max 1 MB)",
+  })
+  // Postgres jsonb cannot store U+0000; reject instead of failing with a 500.
+  .refine((c) => !JSON.stringify(c).includes("\\u0000"), {
+    error: "Document contains invalid characters",
   });
 
 export const updateDocSchema = z

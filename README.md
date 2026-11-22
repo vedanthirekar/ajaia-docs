@@ -74,7 +74,7 @@ To run against real Postgres (e.g. Neon) instead, set `DATABASE_URL=postgresql:/
 
 ### Tests
 
-- **Unit and integration (96 tests):** the permission matrix for every role and action, document CRUD with optimistic-concurrency conflicts, sharing (pending invites, email case-insensitivity, revoke and downgrade), signup and credentials, file import (txt/md/docx and rejection cases), input validation, and the autosave state machine (debounce, edits during an in-flight save, conflict and forbidden states, retry backoff).
+- **Unit and integration (110 tests):** the permission matrix for every role and action, document CRUD with optimistic-concurrency conflicts, sharing (pending invites, email case-insensitivity, revoke and downgrade), signup and credentials, file import (txt/md/docx, UTF-16 files, binary/fake files), input validation, and the autosave state machine (debounce, edits during an in-flight save, unload flush, conflict/forbidden/signed-out/too-large states, retry backoff), and the open-redirect guard.
 - **E2E:** signs up user A, formats a doc, reloads to check persistence (including a reload ~250 ms after typing), shares it with B's email as a pending viewer, signs up B, and checks the doc is listed and read-only, plus that a write from B through the API returns 403.
 - The E2E test uses the locally installed **Google Chrome** by default. To use Playwright's bundled browser instead (e.g. in CI): `npx playwright install chromium` and set `PW_CHANNEL=chromium`. Run it against a deployment with `E2E_BASE_URL=https://… npm run test:e2e`.
 
@@ -88,7 +88,7 @@ To run against real Postgres (e.g. Neon) instead, set `DATABASE_URL=postgresql:/
 ## Deploying (Vercel + Neon, all free tier)
 
 1. Create a Neon project and copy its pooled connection string.
-2. Run `DATABASE_URL=<neon url> npm run db:migrate` once.
+2. Apply the schema once: `npx cross-env DATABASE_URL="<neon url>" npm run db:migrate` (works in any shell).
 3. Import the GitHub repo in Vercel and set `DATABASE_URL`, `AUTH_SECRET`, `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`.
 4. In Google Cloud Console, create an OAuth client (Web) with the redirect URI `https://<your-domain>/api/auth/callback/google`, and publish the consent screen (only basic profile/email scopes are used, so no verification is needed).
 
@@ -99,4 +99,6 @@ To run against real Postgres (e.g. Neon) instead, set `DATABASE_URL=postgresql:/
 - **No real-time co-editing.** Concurrent edits are detected (version check) rather than merged. The schema and editor (TipTap/ProseMirror) leave a direct path to Yjs later; see ARCHITECTURE.md.
 - No comments, suggestions, version history, images, tables, export or folders.
 - No password reset, email verification or share notification emails (each needs an email service).
+- **No email verification**, so a pending invite goes to whoever first registers that email address. That's fine for a demo; in production, verify emails before granting invite access.
+- If you signed up with a password, "Continue with Google" with the same email is refused (sign in with your password). Accounts are deliberately not auto-linked; see ARCHITECTURE.md › Auth.
 - Sessions are JWT-based, so signing out elsewhere doesn't revoke an existing session before it expires. Every request is still re-authorized against the database.

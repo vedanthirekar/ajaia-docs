@@ -31,9 +31,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => ({
   pages: { signIn: "/login" },
   providers: [
     Google({
-      // Safe: Google verifies email ownership, so linking a Google sign-in to an
-      // existing password account with the same email can't be used for takeover.
-      allowDangerousEmailAccountLinking: true,
+      // Deliberately NOT linking a Google sign-in to an existing password account with
+      // the same email: password signups aren't email-verified, so an attacker could
+      // pre-register victim@gmail.com and keep access after the victim later used
+      // Google ("pre-account takeover"). Auth.js returns OAuthAccountNotLinked instead,
+      // and the login page tells the user to sign in with their password. See D-015.
+      allowDangerousEmailAccountLinking: false,
     }),
     Credentials({
       credentials: { email: {}, password: {} },

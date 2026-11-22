@@ -54,21 +54,21 @@ Shares are matched by user id **or** email, so a pending invite grants access th
 ## Saving and concurrency
 
 - `PATCH /api/documents/:id` requires the `version` the client loaded. The update is a single conditional statement (`… WHERE id = ? AND version = ?`, then `version + 1`). Zero rows updated means **409 VERSION_CONFLICT**.
-- The client save queue debounces for about 1 s and never has two requests in flight. Edits made during a save are sent afterwards with the newly returned version. 409 locks the editor with a "changed elsewhere — reload" banner (and a copy-my-text escape hatch). 403/404 locks it with "you no longer have access". Network or 5xx errors retry with backoff while keeping the edits.
-- Pending edits are flushed on `visibilitychange`, `pagehide` and `beforeunload` with `fetch(…, { keepalive: true })`. An E2E test reloads 250 ms after typing to prove this, and I mutation-checked that the test fails without the flush.
+- The client save queue debounces for about 1 s and never has two requests in flight. Edits made during a save are sent afterwards with the newly returned version. 409 locks the editor with a "changed elsewhere — reload" banner (and a copy-my-text escape hatch). 403/404 locks it with "you no longer have access". 401 (signed out) and 400/413 (e.g. over the 1 MB limit) also lock it with a specific message. Network or 5xx errors retry with backoff while keeping the edits.
+- Saves use `fetch(…, { keepalive: true })` whenever the body is under the browsers' 64 KiB keepalive limit, so a save outlives a tab close. Pending edits are flushed on `visibilitychange`, `pagehide` and `beforeunload`. On `pagehide`, edits typed while a save is still in flight are sent immediately at `version + 1`: if the earlier save failed, that request just gets a 409, so nothing newer is ever overwritten. An E2E test reloads 250 ms after typing to prove this, and I mutation-checked that the test fails without the flush.
 
 ## File import
 
-`.txt` (paragraphs split on blank lines, HTML-escaped), `.md` (marked) and `.docx` (mammoth) are converted to HTML and then to TipTap JSON on the server, using **the same extension list as the editor**. Anything the editor can't represent (images, tables) is dropped rather than stored as invalid content. Limits: 4 MB upload (Vercel's request-body limit is 4.5 MB) and 1 MB of resulting document JSON. Fake or corrupt files return 422 with a clear message, never a 500.
+`.txt` (paragraphs split on blank lines, HTML-escaped), `.md` (marked) and `.docx` (mammoth) are converted to HTML and then to TipTap JSON on the server, using **the same extension list as the editor**. Anything the editor can't represent (images, tables) is dropped rather than stored as invalid content. Limits: 4 MB upload (Vercel's request-body limit is 4.5 MB) and 1 MB of resulting document JSON. Text files are decoded with BOM detection (UTF-8 / UTF-16LE / UTF-16BE, as saved by Windows Notepad). Binary data renamed to `.txt`/`.md`, fake or corrupt `.docx` files and empty files return 422 with a clear message, never a 500. NUL characters, which Postgres `jsonb` can't store, are rejected at validation.
 
 ## Auth
 
-Auth.js v5 with Google OAuth and email/password (bcrypt). The Credentials provider requires JWT sessions. A Google sign-in links to an existing password account with the same email; that's safe because Google verifies email ownership. `proxy.ts` only does an optimistic "is there a session cookie" redirect. Real authorization happens server-side on every request.
+Auth.js v5 with Google OAuth and email/password (bcrypt). The Credentials provider requires JWT sessions. A Google sign-in is **not** linked to an existing password account with the same email. Password signups aren't email-verified, so automatic linking would let someone pre-register a victim's address and keep access after the victim later signs in with Google. Such users are told to sign in with their password instead (D-015). `proxy.ts` only does an optimistic "is there a session cookie" redirect. Real authorization happens server-side on every request.
 
 ## Tradeoffs I'd revisit with more time
 
 - **Real-time co-editing:** add `@tiptap/extension-collaboration` with Yjs and a sync server (Hocuspocus or a managed provider). The Yjs document state would become the source of truth and replace the version column. Nothing in the current schema blocks this. I deferred it because it needs long-lived socket infrastructure, and the conflict-detection model already prevents data loss.
 - Email invites and notifications, password reset (needs an email provider).
 - Version history (snapshot `content` on each N-th save), comments.
-- Rate limiting on auth endpoints; server-side session revocation.
+- Email verification (which would also make pending invites safe; see README limitations), rate limiting on auth endpoints, server-side session revocation.
 - Pagination and search on the dashboard once lists get long.

@@ -171,6 +171,52 @@ describe("createSaveQueue", () => {
     expect(h.save).toHaveBeenCalledWith({ content: doc("bye"), version: 1 }, { keepalive: true });
   });
 
+  it("401 → 'unauthenticated', terminal, no retries", async () => {
+    const h = harness();
+    h.q.setContent(doc("a"));
+    await vi.advanceTimersByTimeAsync(1000);
+    h.calls[0].resolve({ ok: false, status: 401 });
+    await flushMicrotasks();
+    expect(h.last()).toBe("unauthenticated");
+    await vi.advanceTimersByTimeAsync(120_000);
+    expect(h.save).toHaveBeenCalledTimes(1);
+  });
+
+  it("400/413 (e.g. document too large) → 'rejected', terminal, no retries", async () => {
+    for (const status of [400, 413]) {
+      const h = harness();
+      h.q.setContent(doc("a"));
+      await vi.advanceTimersByTimeAsync(1000);
+      h.calls[0].resolve({ ok: false, status });
+      await flushMicrotasks();
+      expect(h.last()).toBe("rejected");
+      await vi.advanceTimersByTimeAsync(120_000);
+      expect(h.save).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  it("unload flush during an in-flight save sends pending edits immediately with version+1", async () => {
+    const h = harness(5);
+    h.q.setContent(doc("first"));
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(h.save).toHaveBeenCalledTimes(1); // v5 in flight
+    h.q.setContent(doc("typed before closing"));
+    void h.q.flush({ keepalive: true, unloading: true });
+    await flushMicrotasks();
+    expect(h.save).toHaveBeenCalledTimes(2);
+    expect(h.save).toHaveBeenLastCalledWith({ content: doc("typed before closing"), version: 6 }, { keepalive: true });
+  });
+
+  it("non-unloading flush during an in-flight save still waits (no speculative request)", async () => {
+    const h = harness();
+    h.q.setContent(doc("first"));
+    await vi.advanceTimersByTimeAsync(1000);
+    h.q.setContent(doc("second"));
+    void h.q.flush({ keepalive: true });
+    await flushMicrotasks();
+    expect(h.save).toHaveBeenCalledTimes(1);
+  });
+
   it("flush() with nothing pending does not save", async () => {
     const h = harness();
     await h.q.flush();
@@ -183,5 +229,15 @@ describe("createSaveQueue", () => {
     h.q.dispose();
     await vi.advanceTimersByTimeAsync(5000);
     expect(h.save).not.toHaveBeenCalled();
+  });
+});
+
+describe("canKeepalive", () => {
+  it("allows bodies under the browser's 64 KiB keepalive limit and refuses larger ones", async () => {
+    const { canKeepalive } = await import("@/lib/editor/saveQueue");
+    expect(canKeepalive("x".repeat(1000))).toBe(true);
+    expect(canKeepalive("x".repeat(70_000))).toBe(false);
+    // multi-byte characters count by encoded size, not string length
+    expect(canKeepalive("é".repeat(35_000))).toBe(false);
   });
 });

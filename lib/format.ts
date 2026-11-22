@@ -15,6 +15,20 @@ export function timeAgo(input: Date | string, now: Date = new Date()): string {
 /** Only allow same-origin relative redirect targets (prevents open redirects after login). */
 export function safeCallbackUrl(raw: string | string[] | undefined): string {
   if (typeof raw !== "string") return "/";
-  if (!raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\")) return "/";
-  return raw;
+  // Control chars (tab/CR/LF/NUL…) are stripped by URL parsers, so "/\t/evil.com" would become "//evil.com".
+  if (/[\u0000-\u001f\u007f\\]/.test(raw)) return "/";
+  if (!raw.startsWith("/") || raw.startsWith("//")) return "/";
+  // Final check: resolving against a dummy origin must stay on that origin.
+  const base = "http://same-origin.invalid";
+  const u = new URL(raw, base);
+  return u.origin === base ? u.pathname + u.search + u.hash : "/";
+}
+
+/** Human-readable message for an Auth.js `?error=` code on the login/signup pages. */
+export function authErrorMessage(code: string | string[] | undefined): string | null {
+  if (code === undefined) return null;
+  if (code === "OAuthAccountNotLinked") {
+    return "An account with this email already exists with a password. Sign in with your email and password instead.";
+  }
+  return "We couldn't sign you in. Please try again.";
 }

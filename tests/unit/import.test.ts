@@ -57,6 +57,36 @@ describe("fileToDoc", () => {
     expect(text(content)).toContain("Quarterly Plan");
   });
 
+  it("decodes UTF-16LE text files (Windows 'Unicode') instead of storing NULs", async () => {
+    const body = Buffer.from("Hello Notepad\r\n\r\nSecond para", "utf16le");
+    const bytes = Buffer.concat([Buffer.from([0xff, 0xfe]), body]);
+    const { content } = await fileToDoc("notes.txt", bytes);
+    expect(text(content)).toBe("Hello NotepadSecond para");
+    expect(JSON.stringify(content)).not.toContain("\\u0000");
+  });
+
+  it("decodes UTF-16BE markdown files", async () => {
+    const le = Buffer.from("# Title", "utf16le");
+    const be = Buffer.alloc(le.length);
+    for (let i = 0; i < le.length; i += 2) {
+      be[i] = le[i + 1];
+      be[i + 1] = le[i];
+    }
+    const { content } = await fileToDoc("t.md", Buffer.concat([Buffer.from([0xfe, 0xff]), be]));
+    expect(types(content).has("heading")).toBe(true);
+  });
+
+  it("strips a UTF-8 BOM", async () => {
+    const { content } = await fileToDoc("b.txt", Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from("hi")]));
+    expect(text(content)).toBe("hi");
+  });
+
+  it("rejects binary data renamed to .txt / .md with UNPARSEABLE_FILE (never a 500)", async () => {
+    const binary = Buffer.from([0x50, 0x4b, 0x03, 0x04, 0x00, 0x00, 0x08, 0x00, 0x61, 0x62, 0x00, 0x63]);
+    await expect(fileToDoc("photo.txt", binary)).rejects.toMatchObject({ code: "UNPARSEABLE_FILE" });
+    await expect(fileToDoc("photo.md", binary)).rejects.toMatchObject({ code: "UNPARSEABLE_FILE" });
+  });
+
   it("rejects a fake .docx with UNPARSEABLE_FILE", async () => {
     await expect(fileToDoc("evil.docx", Buffer.from("not a zip"))).rejects.toMatchObject({ code: "UNPARSEABLE_FILE" });
   });

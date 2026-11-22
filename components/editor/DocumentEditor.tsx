@@ -14,6 +14,7 @@ import { ShareDialog } from "@/components/share/ShareDialog";
 import type { DocContent } from "@/lib/db/schema";
 import { editorExtensions } from "@/lib/editor/extensions";
 import {
+  canKeepalive,
   createSaveQueue,
   type SavePayload,
   type SaveQueue,
@@ -34,16 +35,19 @@ export type EditorDoc = {
   ownerName: string;
 };
 
-async function patchDocument(id: string, payload: SavePayload, keepalive: boolean): Promise<SaveResult> {
+async function patchDocument(id: string, payload: SavePayload): Promise<SaveResult> {
+  const body = JSON.stringify(payload);
   const res = await fetch(`/api/documents/${id}`, {
     method: "PATCH",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify(payload),
-    keepalive,
+    body,
+    // keepalive lets a save outlive the page (tab close / reload). Browsers reject
+    // keepalive bodies over 64 KiB, so larger docs fall back to a normal request.
+    keepalive: canKeepalive(body),
   });
   if (!res.ok) return { ok: false, status: res.status };
-  const body = (await res.json()) as { version: number };
-  return { ok: true, version: body.version };
+  const saved = (await res.json()) as { version: number };
+  return { ok: true, version: saved.version };
 }
 
 export function DocumentEditor({ doc, user }: { doc: EditorDoc; user: { name: string; email: string } }) {
@@ -73,8 +77,8 @@ export function DocumentEditor({ doc, user }: { doc: EditorDoc; user: { name: st
     onUpdate: ({ editor: e }) => queueRef.current?.setContent(e.getJSON() as DocContent),
   });
 
-  // Stop editing once saving is impossible (conflict / access lost).
-  const locked = state === "conflict" || state === "forbidden";
+  // Stop editing once saving is impossible (conflict / access lost / signed out / rejected).
+  const locked = state === "conflict" || state === "forbidden" || state === "unauthenticated" || state === "rejected";
   useEffect(() => {
     if (editor && locked) editor.setEditable(false);
   }, [editor, locked]);
@@ -83,7 +87,7 @@ export function DocumentEditor({ doc, user }: { doc: EditorDoc; user: { name: st
   useEffect(() => {
     const queue = createSaveQueue({
       initialVersion: doc.version,
-      save: (payload, { keepalive }) => patchDocument(doc.id, payload, keepalive),
+      save: (payload) => patchDocument(doc.id, payload),
       onState: setState,
     });
     queueRef.current = queue;
@@ -91,7 +95,9 @@ export function DocumentEditor({ doc, user }: { doc: EditorDoc; user: { name: st
     const onHide = () => {
       if (document.visibilityState === "hidden") void queue.flush({ keepalive: true });
     };
-    const onPageHide = () => void queue.flush({ keepalive: true });
+    // Only pagehide means the page is really going away (beforeunload can be cancelled),
+    // so only here may edits typed during an in-flight save be sent speculatively.
+    const onPageHide = () => void queue.flush({ keepalive: true, unloading: true });
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
       if (queue.hasUnsavedChanges()) {
         void queue.flush({ keepalive: true });
@@ -184,6 +190,43 @@ export function DocumentEditor({ doc, user }: { doc: EditorDoc; user: { name: st
                 <AlertTitle>You no longer have edit access to this document.</AlertTitle>
                 <AlertDescription>
                   Your recent edits weren’t saved. Ask {doc.ownerName} for access, or copy your text.
+                  <div className="mt-2">
+                    <Button size="sm" variant="outline" onClick={copyText}>
+                      <Copy />
+                      Copy my text
+                    </Button>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
+            {state === "unauthenticated" && (
+              <Alert variant="destructive" data-testid="signed-out-banner">
+                <AlertTriangle />
+                <AlertTitle>You’ve been signed out.</AlertTitle>
+                <AlertDescription>
+                  Your recent edits weren’t saved. Copy your text, then sign in again.
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <Button size="sm" variant="outline" onClick={copyText}>
+                      <Copy />
+                      Copy my text
+                    </Button>
+                    <Button
+                      size="sm"
+                      nativeButton={false}
+                      render={<Link href={`/login?callbackUrl=${encodeURIComponent(`/documents/${doc.id}`)}`} />}
+                    >
+                      Sign in again
+                    </Button>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
+            {state === "rejected" && (
+              <Alert variant="destructive" data-testid="rejected-banner">
+                <AlertTriangle />
+                <AlertTitle>This change couldn’t be saved.</AlertTitle>
+                <AlertDescription>
+                  The document may have grown past the 1 MB limit. Copy your text and split it into another document.
                   <div className="mt-2">
                     <Button size="sm" variant="outline" onClick={copyText}>
                       <Copy />

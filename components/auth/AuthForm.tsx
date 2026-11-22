@@ -26,16 +26,18 @@ export function AuthForm({
   mode,
   callbackUrl,
   googleEnabled,
+  initialError = null,
 }: {
   mode: Mode;
   callbackUrl: string;
   googleEnabled: boolean;
+  initialError?: string | null;
 }) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initialError);
   const [pending, setPending] = useState(false);
 
   async function onSubmit(e: FormEvent) {

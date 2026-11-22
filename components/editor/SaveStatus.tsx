@@ -11,6 +11,8 @@ const COPY: Record<SaveState, { text: string; icon: typeof Check; className?: st
   error: { text: "Connection problem — retrying", icon: CloudOff, className: "text-amber-600 dark:text-amber-500" },
   conflict: { text: "Not saved", icon: AlertTriangle, className: "text-destructive" },
   forbidden: { text: "Not saved", icon: AlertTriangle, className: "text-destructive" },
+  unauthenticated: { text: "Not saved", icon: AlertTriangle, className: "text-destructive" },
+  rejected: { text: "Not saved", icon: AlertTriangle, className: "text-destructive" },
 };
 
 export function SaveStatus({ state }: { state: SaveState }) {

@@ -28,4 +28,26 @@ describe("safeCallbackUrl", () => {
     expect(safeCallbackUrl(undefined)).toBe("/");
     expect(safeCallbackUrl(["/a", "/b"])).toBe("/");
   });
+  it("rejects control-character tricks the URL parser strips (tab/newline → //evil.com)", () => {
+    expect(safeCallbackUrl("/\t/evil.com")).toBe("/");
+    expect(safeCallbackUrl("/\n/evil.com")).toBe("/");
+    expect(safeCallbackUrl("/\r/evil.com")).toBe("/");
+    expect(safeCallbackUrl("/\u0000x")).toBe("/");
+  });
+  it("keeps the hash and query of a same-origin path", () => {
+    expect(safeCallbackUrl("/documents/a?x=1#top")).toBe("/documents/a?x=1#top");
+  });
+});
+
+describe("authErrorMessage", () => {
+  it("explains OAuthAccountNotLinked (Google used on a password account)", async () => {
+    const { authErrorMessage } = await import("@/lib/format");
+    expect(authErrorMessage("OAuthAccountNotLinked")).toMatch(/password/i);
+  });
+  it("returns a generic message for other errors and null for none", async () => {
+    const { authErrorMessage } = await import("@/lib/format");
+    expect(authErrorMessage("Configuration")).toMatch(/couldn.t sign you in/i);
+    expect(authErrorMessage(undefined)).toBeNull();
+    expect(authErrorMessage(["a", "b"])).toMatch(/couldn.t sign you in/i);
+  });
 });

@@ -6,19 +6,37 @@ import type { DocContent } from "../db/schema";
  * Guarantees:
  * - At most one save request in flight; edits made meanwhile are merged and sent
  *   afterwards with the version the previous save returned (nothing is lost).
- * - 409 → `conflict` and 403/404 → `forbidden` are terminal: no further saves.
+ * - Terminal (no further saves): 409 → `conflict`, 403/404 → `forbidden`,
+ *   401 → `unauthenticated`, 400/413 → `rejected` (e.g. document too large).
  * - Other failures (5xx, network) → `error`, retried with backoff while keeping edits.
+ * - On page unload, edits typed during an in-flight save are sent immediately
+ *   (speculatively at version+1) rather than waiting for a response that may never arrive.
  */
-export type SaveState = "saved" | "dirty" | "saving" | "error" | "conflict" | "forbidden";
+export type SaveState =
+  | "saved"
+  | "dirty"
+  | "saving"
+  | "error"
+  | "conflict"
+  | "forbidden"
+  | "unauthenticated"
+  | "rejected";
 export type SavePayload = { content?: DocContent; title?: string; version: number };
 export type SaveResult = { ok: true; version: number } | { ok: false; status: number };
 export type SaveOptions = { keepalive: boolean };
+export type FlushOptions = { keepalive?: boolean; unloading?: boolean };
+
+/** Browsers reject keepalive requests whose body exceeds 64 KiB; stay safely under it. */
+export const KEEPALIVE_MAX_BYTES = 60_000;
+export function canKeepalive(body: string): boolean {
+  return new TextEncoder().encode(body).length <= KEEPALIVE_MAX_BYTES;
+}
 
 export type SaveQueue = {
   setContent(content: DocContent): void;
   setTitle(title: string): void;
   /** Save pending edits now (skips the debounce). Resolves when that save settles. */
-  flush(opts?: Partial<SaveOptions>): Promise<void>;
+  flush(opts?: FlushOptions): Promise<void>;
   /** True while there are edits the server hasn't accepted yet (and saving is still possible). */
   hasUnsavedChanges(): boolean;
   dispose(): void;
@@ -96,14 +114,20 @@ export function createSaveQueue(opts: {
 
       // Failed: put the edits back underneath anything typed since.
       pending = merge(payload, pending);
-      if (result.status === 409) {
+      const terminalState: SaveState | null =
+        result.status === 409
+          ? "conflict"
+          : result.status === 403 || result.status === 404
+            ? "forbidden"
+            : result.status === 401
+              ? "unauthenticated"
+              : result.status === 400 || result.status === 413
+                ? "rejected"
+                : null;
+      if (terminalState) {
         terminal = true;
         clearTimer();
-        setState("conflict");
-      } else if (result.status === 403 || result.status === 404) {
-        terminal = true;
-        clearTimer();
-        setState("forbidden");
+        setState(terminalState);
       } else {
         const delay = RETRY_DELAYS_MS[Math.min(failures, RETRY_DELAYS_MS.length - 1)];
         failures++;
@@ -128,8 +152,17 @@ export function createSaveQueue(opts: {
     setTitle: (title) => edit({ title }),
     async flush(o) {
       clearTimer();
+      const keepalive = o?.keepalive ?? false;
+      if (inFlight && o?.unloading && pending && !terminal && !disposed) {
+        // The page is going away: JS may never see the in-flight response, so send the
+        // newer edits now at the version that save will produce. If that save fails,
+        // this one gets a 409 — nothing newer is ever overwritten.
+        const payload = pending;
+        void opts.save({ ...payload, version: version + 1 }, { keepalive }).catch(() => undefined);
+        return;
+      }
       if (inFlight) await inFlight;
-      await run({ keepalive: o?.keepalive ?? false });
+      await run({ keepalive });
     },
     hasUnsavedChanges: () => !terminal && (pending !== null || inFlight !== null),
     dispose() {

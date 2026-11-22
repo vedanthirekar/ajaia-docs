@@ -30,12 +30,32 @@ function txtToHtml(text: string): string {
     .join("");
 }
 
+/**
+ * Decode a text upload: honours UTF-16 LE/BE and UTF-8 BOMs (Windows Notepad's
+ * "Unicode" is UTF-16LE), defaults to UTF-8, and rejects binary data — which
+ * would otherwise smuggle NUL characters that Postgres jsonb refuses (a 500).
+ */
+function decodeText(bytes: Buffer): string {
+  let encoding = "utf-8";
+  let start = 0;
+  if (bytes[0] === 0xff && bytes[1] === 0xfe) [encoding, start] = ["utf-16le", 2];
+  else if (bytes[0] === 0xfe && bytes[1] === 0xff) [encoding, start] = ["utf-16be", 2];
+  else if (bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) start = 3;
+
+  const text = new TextDecoder(encoding).decode(bytes.subarray(start));
+  const replacements = text.match(/�/g)?.length ?? 0;
+  if (text.includes("\u0000") || replacements > Math.max(8, text.length * 0.05)) {
+    throw new AppError("UNPARSEABLE_FILE", "This file doesn't look like plain text. Is it the right file?");
+  }
+  return text;
+}
+
 async function toHtml(ext: Ext, bytes: Buffer): Promise<string> {
   switch (ext) {
     case ".txt":
-      return txtToHtml(bytes.toString("utf8"));
+      return txtToHtml(decodeText(bytes));
     case ".md":
-      return marked.parse(bytes.toString("utf8"), { async: false });
+      return marked.parse(decodeText(bytes), { async: false });
     case ".docx": {
       try {
         const { value } = await mammoth.convertToHtml({ buffer: bytes });
