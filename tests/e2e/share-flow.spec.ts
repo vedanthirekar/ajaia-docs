@@ -89,6 +89,15 @@ test("create, format, persist, share as viewer, and enforce read-only access", a
   });
   expect(res.status()).toBe(403);
 
+  // --- Account menu shows who's signed in and signs out ---
+  await b.goto("/");
+  await b.getByRole("button", { name: /Account menu for Bob E2E/ }).click();
+  await expect(b.getByRole("menu")).toContainText(bob.email);
+  await b.getByRole("menuitem", { name: "Sign out" }).click();
+  await expect(b).toHaveURL(/\/login/);
+  await b.goto("/");
+  await expect(b).toHaveURL(/\/login/);
+
   await aliceCtx.close();
   await bobCtx.close();
 });

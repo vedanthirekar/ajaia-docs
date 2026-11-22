@@ -46,7 +46,7 @@ export function ImportButton() {
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <>
       <input
         ref={input}
         type="file"
@@ -68,7 +68,6 @@ export function ImportButton() {
         </TooltipTrigger>
         <TooltipContent>Creates a new document from the file</TooltipContent>
       </Tooltip>
-      <span className="text-xs text-muted-foreground">{SUPPORTED_LABEL}</span>
-    </div>
+    </>
   );
 }

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -36,10 +37,13 @@ export function UserMenu({ name, email }: { name: string; email: string }) {
         </span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="font-normal">
-          <div className="truncate text-sm font-medium text-foreground">{name}</div>
-          <div className="truncate text-xs text-muted-foreground">{email}</div>
-        </DropdownMenuLabel>
+        {/* Base UI requires group labels to live inside a Menu.Group */}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="font-normal">
+            <div className="truncate text-sm font-medium text-foreground">{name}</div>
+            <div className="truncate text-xs text-muted-foreground">{email}</div>
+          </DropdownMenuLabel>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => signOut({ redirectTo: "/login" })}>
           <LogOut />

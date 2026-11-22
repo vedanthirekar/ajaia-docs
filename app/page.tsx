@@ -4,6 +4,7 @@ import { DocList } from "@/components/dashboard/DocList";
 import { ImportButton } from "@/components/dashboard/ImportButton";
 import { NewDocButton } from "@/components/dashboard/NewDocButton";
 import { getDb } from "@/lib/db";
+import { SUPPORTED_LABEL } from "@/lib/import/constants";
 import { listDocuments } from "@/lib/services/documents";
 import { getPageUser } from "@/lib/session";
 
@@ -22,9 +23,12 @@ export default async function DashboardPage() {
             <h1 className="text-2xl font-semibold tracking-tight">Documents</h1>
             <p className="text-sm text-muted-foreground">Create, import and share your work.</p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <ImportButton />
-            <NewDocButton />
+          <div className="flex flex-col items-start gap-1.5 sm:items-end">
+            <div className="flex flex-wrap items-center gap-2">
+              <ImportButton />
+              <NewDocButton />
+            </div>
+            <span className="text-xs text-muted-foreground">{SUPPORTED_LABEL}</span>
           </div>
         </div>
 
