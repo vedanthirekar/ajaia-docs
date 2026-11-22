@@ -148,6 +148,22 @@ test("create, format, persist, share as viewer, and enforce read-only access", a
   await b.goto("/");
   await expect(b).toHaveURL(/\/login/);
 
+  // --- Signing back in through the login form lands on the dashboard (regression:
+  // a router.replace + refresh race could leave a blank /login page). Repeat to catch flakiness.
+  for (let i = 0; i < 3; i++) {
+    await b.goto("/login");
+    await b.getByLabel("Email").fill(bob.email);
+    await b.getByLabel("Password").fill(bob.password);
+    await b.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expect(b.getByRole("heading", { name: "Documents", exact: true })).toBeVisible();
+    await expect(b).toHaveURL(/\/$/);
+    if (i < 2) {
+      await b.getByRole("button", { name: /Account menu for Bob E2E/ }).click();
+      await b.getByRole("menuitem", { name: "Sign out" }).click();
+      await expect(b).toHaveURL(/\/login/);
+    }
+  }
+
   await aliceCtx.close();
   await bobCtx.close();
 });

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -34,7 +33,6 @@ export function AuthForm({
   googleEnabled: boolean;
   initialError?: string | null;
 }) {
-  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -49,6 +47,7 @@ export function AuthForm({
   async function submit(emailValue: string, passwordValue: string) {
     setError(null);
     setPending(true);
+    let navigating = false;
     try {
       if (mode === "signup") {
         await apiFetch("/api/auth/signup", {
@@ -65,12 +64,15 @@ export function AuthForm({
         );
         return;
       }
-      router.replace(callbackUrl);
-      router.refresh();
+      // Full navigation (not router.replace + router.refresh, which raced: the refresh
+      // re-requested /login, whose server redirect for signed-in users left a blank page).
+      // A hard load guarantees the next page renders with the new session cookie.
+      navigating = true; // keep the button disabled until the new page loads
+      window.location.assign(callbackUrl);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
     } finally {
-      setPending(false);
+      if (!navigating) setPending(false);
     }
   }
 
