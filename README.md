@@ -1,133 +1,84 @@
 # Ajaia Docs
 
-A lightweight collaborative document editor: create and format documents, import files, and share them with other people as viewers or editors.
+A lightweight document editor: write formatted documents, import files, and share them with other people.
 
-**Live demo:** https://ajaia-docs-one-omega.vercel.app
+**Live app:** https://ajaia-docs-one-omega.vercel.app
+**More detail:** [ARCHITECTURE.md](ARCHITECTURE.md) (how it works) · [AI_NOTES.md](AI_NOTES.md) (how I used AI) · [decisions.md](decisions.md) (every decision and why) · [screenshots](docs/screenshots/)
 
-> Built for the Ajaia AI-Native Full Stack Developer assignment. See [ARCHITECTURE.md](ARCHITECTURE.md) for what I prioritized and why, [AI_NOTES.md](AI_NOTES.md) for how I used AI, and [decisions.md](decisions.md) for the full decision log.
+## Try it in 30 seconds
 
----
+On the login page, click a **demo account**. All three use the password `ajaia-demo-2026` and contain sample data that's already shared between them:
 
-## What you can do
-
-| Area | Supported |
+| Account | What you'll see |
 |---|---|
-| **Documents** | Create, rename (click the title), edit, delete (owner only), and reopen. Autosaves about 1 s after you stop typing. |
-| **Formatting** | Bold, italic, underline, strikethrough, Heading 1–3, **any font size** (type a value 6–96 or use −/+), **any text colour** (48-swatch palette, colour picker or hex code), highlight, links, text alignment (left/center/right/justify), bulleted and numbered lists, quotes, divider lines, undo/redo. Toolbar plus keyboard shortcuts (`Ctrl/⌘+B/I/U`), and Markdown shortcuts as you type (`# `, `- `, `1. `, `> `). Links accept http(s) and mailto only, and viewers can click them. |
-| **File import** | **Supported: `.txt`, `.md`, `.docx` (max 4 MB).** Each upload becomes a **new document**. Headings, bold, italic, lists and links are kept. Images, tables and complex Word styling are dropped. |
-| **Sharing** | The owner shares by email as **Viewer** (read-only) or **Editor** (edit and rename). Sharing with an email that has no account yet creates a **pending invite**: the doc shows up as soon as that person signs up. Roles can be changed or revoked at any time. |
-| **Page layout** | The editor shows an **A4 sheet** (210 mm wide, Word's default 2.54 cm margins). **Ctrl/⌘+P prints real A4 pages**: the browser paginates, and the app's toolbar and header are hidden. |
-| **Public link** | The owner can switch a document to **"Anyone with the link can view"** in the Share dialog. Anyone with the link can then read it, **even without an account**, but never edit it. Switching back to *Restricted* removes that access immediately. Public docs show a *Public* tag on the owner's dashboard. |
-| **Dashboard** | "My documents" and "Shared with me" are listed separately, with role badges and owner names. Owners can **Share** or **Delete** straight from a document's ⋮ menu. |
-| **Accounts** | Email and password signup, plus **Continue with Google**. |
-| **Safety** | If the same doc was saved from another tab or by another editor since you loaded it, your save is rejected and you're asked to reload (with a "copy my text" escape hatch) instead of silently overwriting. If your access is revoked while the doc is open, the editor locks. |
+| Maya Chen (`maya@demo.example`) | Owns docs shared as **editor** and **viewer**, a **public link** doc (opens without signing in) and a doc **imported** from a `.md` file |
+| Leo Martins (`leo@demo.example`) | Can **edit** Maya's roadmap |
+| Priya Patel (`priya@demo.example`) | Can only **view** Maya's roadmap; has a **pending** invite and a **private** draft |
 
-**Screenshots:** [`docs/screenshots/`](docs/screenshots/) (login with demo accounts, dashboard, editor, share dialog, view-only and public-link views).
+To reset the demo data: `npm run seed:demo -- https://ajaia-docs-one-omega.vercel.app`
 
-### Demo accounts (fastest way to review)
+## Features
 
-The login page has **one-click demo accounts**. All use the password `ajaia-demo-2026`, and they hold mock data only.
+- **Editing:** headings, bold/italic/underline/strikethrough, font size, text colour, highlight, links, alignment, bulleted, numbered and check lists, quotes. There's a toolbar, and keyboard and Markdown shortcuts work too.
+- **Autosave:** saves about a second after you stop typing. If someone else saved a newer version, you're warned instead of overwriting their work.
+- **Import:** upload **`.txt`, `.md` or `.docx` (max 4 MB)** to create a new document. Headings, lists and bold/italic are kept; images and tables are dropped.
+- **Sharing:** the owner adds people by email as **Viewer** (read-only) or **Editor**. People without an account yet get a *pending* invite and see the doc once they sign up. A doc can also be made **"anyone with the link can view"**.
+- **Dashboard:** owned and shared documents with search and filters. Owners can share or delete from each card's ⋮ menu.
+- **Page layout:** the editor shows an A4 page, and **Ctrl/⌘+P** prints real A4 pages.
 
-| Account | Role | What it shows |
-|---|---|---|
-| **Maya Chen** · `maya@demo.example` | Product lead | Owns *Q4 Product Roadmap* (Leo = editor, Priya = viewer), *Team Offsite — Lisbon* (**public link**, opens without signing in) and *Design Principles* (**imported** from a `.md` file). Has 3 docs shared *with* her. |
-| **Leo Martins** · `leo@demo.example` | Engineer | Owns *Editor Architecture Notes* (Maya = viewer) and *Sprint 14 Retro* (Maya and Priya = editors). Can edit Maya's roadmap. |
-| **Priya Patel** · `priya@demo.example` | Designer | Owns *Cotton Theme Style Guide* (Maya and Leo = viewers, plus a **pending** invite to someone who hasn't signed up) and a **private** draft. Can only *view* Maya's roadmap. |
+## Run it locally
 
-Reset the demo data at any time (recreates everything through the public API):
-
-```bash
-npm run seed:demo -- https://ajaia-docs-one-omega.vercel.app   # or omit the URL for localhost
-```
-
-### Trying the sharing flow yourself
-
-1. Sign up as user A, create a doc and write something.
-2. Click **Share**, enter a second email (e.g. `b@example.com`) and pick **Viewer**. It shows as *Pending*.
-3. In a private/incognito window, sign up with that second email. The doc appears under **Shared with me** with a *Viewer* badge and opens read-only.
-4. Back as A, switch B to **Editor**. After a refresh, B can edit. Remove B, and B gets "not found".
-5. In the Share dialog, set **General access → Anyone with the link** and open the link in a private window without signing in. It opens read-only.
-
-**No email is sent when sharing** (there's no email service), so send the link yourself. The Share dialog has a **Copy link** button. The invite is still real: it appears in the person's "Shared with me" as soon as they sign up with that email.
-
----
-
-## Running locally
-
-**Requirements:** Node.js 22+ and npm. No database install is needed.
+You need **Node.js 22+**. No database to install: it uses an embedded Postgres stored in `./.data`.
 
 ```bash
 npm install
 cp .env.example .env.local
 ```
 
-Edit `.env.local`:
+In `.env.local`, set:
 
 ```bash
-# Zero-setup local database (embedded Postgres via PGlite, stored in ./.data)
 DATABASE_URL=pglite:./.data/pglite
-# Any long random string, e.g. from: npx auth secret
-AUTH_SECRET=replace-me
-# Optional: Google sign-in (the button is hidden when these are unset)
-AUTH_GOOGLE_ID=
-AUTH_GOOGLE_SECRET=
+AUTH_SECRET=any-long-random-string     # e.g. from: npx auth secret
 ```
 
 Then:
 
 ```bash
-npm run db:migrate   # create tables
-npm run dev          # http://localhost:3000
+npm run db:migrate   # create the tables
+npm run dev          # open http://localhost:3000
+npm run seed:demo    # optional: add the demo accounts
 ```
 
-To run against real Postgres (e.g. Neon) instead, set `DATABASE_URL=postgresql://…` and run `npm run db:migrate`.
+To use a real Postgres (e.g. Neon) instead, set `DATABASE_URL=postgresql://…` and run `npm run db:migrate`.
 
-### Scripts
+## Tests
 
-| Command | What it does |
+| Command | What it runs |
 |---|---|
-| `npm run dev` | Dev server |
-| `npm run build` / `npm start` | Production build / serve |
-| `npm test` | Unit and integration tests (Vitest; each test gets a fresh in-memory Postgres) |
-| `npm run test:e2e` | End-to-end browser test (Playwright; starts its own server with a throwaway DB) |
-| `npm run lint` | ESLint |
-| `npm run db:generate` / `db:migrate` | Create / apply Drizzle migrations |
+| `npm test` | 143 unit/integration tests against a real in-memory database: permissions, saving and conflicts, sharing, import, validation, autosave logic |
+| `npm run test:e2e` | A browser test of the full flow: sign up, write, reload, share, view-only access, public link, sign out and back in. It uses your installed Chrome; set `PW_CHANNEL=chromium` to use Playwright's bundled browser. |
+| `npm run lint` | Lint checks |
 
-### Tests
+## Deploying (Vercel + Neon, free)
 
-- **Unit and integration (143 tests):** the permission matrix for every role and action, document CRUD with optimistic-concurrency conflicts, sharing (pending invites, email case-insensitivity, revoke and downgrade), signup and credentials, file import (txt/md/docx, UTF-16 files, binary/fake files), input validation, and the autosave state machine (debounce, edits during an in-flight save, unload flush, conflict/forbidden/signed-out/too-large states, retry backoff), and the open-redirect guard.
-- **E2E:** signs up user A, formats a doc, reloads to check persistence (including a reload ~250 ms after typing), shares it with B's email as a pending viewer, signs up B, and checks the doc is listed and read-only, plus that a write from B through the API returns 403. It also shares from the dashboard menu, makes the doc public and checks a signed-out visitor can read but not write it, turns that off again, and signs out via the account menu.
-- The E2E test uses the locally installed **Google Chrome** by default. To use Playwright's bundled browser instead (e.g. in CI): `npx playwright install chromium` and set `PW_CHANNEL=chromium`. Run it against a deployment with `E2E_BASE_URL=https://… npm run test:e2e`.
+1. Import the GitHub repo into Vercel.
+2. Add a Neon database from Vercel's **Storage** tab. This sets `DATABASE_URL`.
+3. Add `AUTH_SECRET` in Vercel's environment variables.
+4. Run the migration once against the **production** database URL:
+   `npx cross-env DATABASE_URL="<url>" npm run db:migrate`
+5. Optional, for Google sign-in: add `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`. The button only appears when these are set.
 
-### Troubleshooting
+## Not included (on purpose)
 
-- **Styles look stale in dev after editing CSS:** stop the server, delete `.next/`, and restart. Turbopack's persistent dev cache occasionally holds an old stylesheet.
-- **"DATABASE_URL is not set":** create `.env.local` as above.
+- Real-time co-editing, comments and version history. Concurrent edits are detected and warned about, not merged.
+- Invite emails, password reset and email verification (they need an email service).
+- On-screen page breaks. The page is A4-sized; printing does paginate.
 
----
+Because there's no email verification, a pending invite goes to whoever first signs up with that email address.
 
-## Deploying (Vercel + Neon, all free tier)
-
-1. Create a Neon project and copy its pooled connection string.
-2. Apply the schema once: `npx cross-env DATABASE_URL="<neon url>" npm run db:migrate` (works in any shell).
-3. Import the GitHub repo in Vercel and set `DATABASE_URL`, `AUTH_SECRET`, `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`.
-4. In Google Cloud Console, create an OAuth client (Web) with the redirect URI `https://<your-domain>/api/auth/callback/google`, and publish the consent screen (only basic profile/email scopes are used, so no verification is needed).
-
----
-
-## Known limitations and deliberate cuts
-
-- **No real-time co-editing.** Concurrent edits are detected (version check) rather than merged. The schema and editor (TipTap/ProseMirror) leave a direct path to Yjs later; see ARCHITECTURE.md.
-- **No on-screen pagination or headers/footers.** The A4 sheet grows taller instead of breaking into pages (printing does paginate). Free pagination add-ons are immature, and TipTap's official Pages add-on is paid (D-017, D-018).
-- No comments, suggestions, version history, images, tables, export or folders.
-- No password reset, email verification or share notification emails (each needs an email service).
-- **No email verification**, so a pending invite goes to whoever first registers that email address. That's fine for a demo; in production, verify emails before granting invite access.
-- If you signed up with a password, "Continue with Google" with the same email is refused (sign in with your password). Accounts are deliberately not auto-linked; see ARCHITECTURE.md › Auth.
-- Sessions are JWT-based, so signing out elsewhere doesn't revoke an existing session before it expires. Every request is still re-authorized against the database.
-
----
+**Troubleshooting:** if styles look stale while developing, stop the server, delete `.next/` and restart.
 
 ## Credits
 
-- Logo and favicon: "Document" icon by [Icons8](https://icons8.com) (free licence with attribution).
-- Visual theme ("Cotton"): `design-handoff/` (spec, tokens and mockups).
+Logo by [Icons8](https://icons8.com). The visual theme comes from `design-handoff/`.

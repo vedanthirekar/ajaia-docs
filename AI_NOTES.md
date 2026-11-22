@@ -1,44 +1,37 @@
-# AI-native workflow note
+# AI workflow note
 
-## Tools used
+## Tools
 
-- **Claude Code** (Claude Opus, in VS Code) as a pair-programmer for scoping, planning, implementation, tests and documentation.
-- **Claude in Chrome** to drive the running app in a real browser during manual verification.
-- Plain tooling for verification: TypeScript, ESLint, Vitest, Playwright.
+- **Claude Code** (in VS Code): planning, writing code and tests, documentation.
+- **Claude in Chrome / Playwright:** clicking through the real app to check it.
 
-## How I worked with it
+## How I worked
 
-1. **Scope before code.** I gave the assignment to the AI and had it question me before proposing anything: timebox, stack, auth model, upload behavior, sharing edge cases. I made the product calls (Google plus email/password auth, defer co-editing, pending invites, import as a new doc). Every decision is logged in [decisions.md](decisions.md).
-2. **Spec → plan → test-first execution.** A written design spec ([docs/superpowers/specs](docs/superpowers/specs)) became a 14-task plan ([docs/superpowers/plans](docs/superpowers/plans)). Each backend task started with failing tests, and the plan named the five failure modes most likely to hurt a real user (e.g. typing during an in-flight save, access revoked mid-edit) so each one got a test.
-3. **Read the installed docs, not memory.** Next.js 16 ships its docs in `node_modules/next/dist/docs`. The AI read them before writing code, which caught real version differences: `middleware` → `proxy.ts`, Cache Components on by default, async `params`, and shadcn now generating Base UI components instead of Radix.
+1. **Decided the scope myself first.** The AI asked me questions (stack, login method, upload behaviour, sharing rules) and I made the product calls. They're all logged in `decisions.md`.
+2. **Spec → plan → tests first.** A short design doc became a 14-task plan. For each piece of logic, the test was written and seen failing before the code existed.
+3. **Checked the installed docs, not memory.** Next.js 16 changed several things the AI might otherwise have got wrong (e.g. `middleware` → `proxy.ts`).
 
-## Where AI materially sped things up
+## Where AI saved the most time
 
-- Scaffolding the data layer, REST routes, Zod schemas and the error contract consistently across ~10 endpoints.
-- Writing broad, table-driven tests quickly: the full role × action permission matrix, import fixtures (including generating a real `.docx` in-test), and the autosave state machine with fake timers.
-- Building UI components (toolbar, share dialog, dashboard) on a component library I hadn't used in its new Base UI form.
-- Docs: README, this note, and the architecture note, drafted from the actual decisions log.
+- Writing the API routes, validation and error handling consistently.
+- Writing broad tests quickly: every role × action permission combination, real `.docx` files generated inside tests, autosave timing.
+- Building UI on an unfamiliar component library, and drafting docs from the decision log.
 
 ## What I changed or rejected
 
-| AI output / default | What happened |
+| AI suggestion or default | What happened |
 |---|---|
-| SQLite as the "simple" store | Rejected: Vercel's filesystem is ephemeral. Chose Neon Postgres, plus PGlite for zero-setup local dev and real-SQL tests. |
-| Next 16's default Cache Components | Turned off: every page is per-user and dynamic, so it added build constraints with no benefit. |
-| Autosave queue created with `useMemo` | **Bug caught in browser testing:** React Strict Mode's dev double-mount disposed the memoized queue and reused it, so every edit was silently dropped while the UI said "Saved". Rewrote it so the effect owns the queue's lifecycle. The E2E test now checks persistence after reload. |
-| A single PGlite instance per module | **Bug caught in browser testing:** Next dev loads route handlers and pages as separate module copies, which created two embedded DB instances that didn't see each other's writes (a shared doc was missing from the dashboard). Fixed with a process-wide singleton. |
-| `auth()` wrapper exported as the proxy | Didn't match Next 16's required export shape. Replaced with a cookie-presence redirect, and kept real checks server-side. |
-| Import limited only by file size | Gap found while writing tests: a 1.8 MB `.txt` would import but then exceed the 1 MB save limit, so the doc could never be saved. Added a converted-size check, and wrote a test that I watched fail first. |
-| My own "safe" calls, challenged by an independent AI code review | A fresh reviewer agent found four real issues I then fixed test-first: a tab-character open-redirect bypass (`/	/evil.com`), unsafe Google↔password account auto-linking (pre-account takeover), UTF-16/binary uploads causing a 500, and unload saves that silently failed for docs over 64 KiB. I also re-graded "401 retries forever" from minor to must-fix, because the user would keep typing into a doc that can't save. |
-| Client-side redirect after sign-in (`router.replace` + `router.refresh`) | **Production-only bug caught while taking screenshots:** the two calls raced on the live site, so sign-in left a blank `/login` page (0/8 attempts succeeded) even though every local test passed. Replaced with a full page navigation, verified 8/8 on production, and added a repeated sign-in step to the E2E test. Lesson: verify the deployed build, not just local. |
-| A test with an escaped backslash | A shell heredoc collapsed `\\` and the open-redirect test checked the wrong input. Caught because the test failed for the wrong reason. Fixed the test, not the code. |
+| SQLite as the simple database | Rejected. Vercel can't keep a local database file, so I used Postgres (Neon). |
+| Autosave set up the "normal" React way | **Bug I caught by testing in the browser:** in development, edits were silently dropped while the screen said "Saved". Rewrote it, and the browser test now checks that edits persist after a reload. |
+| Redirecting after login with two router calls | **Broke only on the live site:** sign-in got stuck on a blank page (0 of 8 attempts worked), while all local tests passed. Fixed it, confirmed 8 of 8 on the live site, and added a test. Lesson: test the deployed app, not just local. |
+| Linking Google and password accounts with the same email | Rejected after an independent AI code review flagged it as an account-takeover risk. |
+| Import limited only by file size | Found a gap: a big text file could import but then never save. Added a size check with a test. |
 
-## How I verified correctness, UX quality and reliability
+I also had a separate AI reviewer check the whole codebase. It found four real issues; I fixed each one test-first: a login redirect trick, the account-linking risk, Windows "Unicode" text files crashing import, and large docs not saving when the tab closes.
 
-- **137 unit/integration tests** run real SQL against a fresh in-memory Postgres per test. No database mocks.
-- **Test-first:** every service and pure module had its test written and seen failing before the implementation.
-- **Mutation check on the riskiest E2E assertion:** I disabled the flush-on-pagehide code and confirmed the "reload right after typing" test fails, then restored it.
-- **Checks against the deployed site:** an HTTP smoke test of every flow (auth, save, stale-save 409, import, share, public link, viewer 403, anonymous 401) and a scripted sign-in loop.
-- **Manual end-to-end passes in a real browser** across two accounts: formatting round-trip, rename, conflict banner (simulated second tab), viewer read-only mode, editor rename allowed / delete forbidden, role downgrade, revoke → 404, self-share and duplicate-share errors, and 375 px mobile layout.
-- **API-level checks with curl:** status codes and error bodies for malformed JSON, bad IDs, unsupported files, stale versions and unauthorized access.
-- `tsc`, ESLint and a production `next build` run clean before each commit.
+## How I verified the work
+
+- **143 automated tests** run against a real database, plus a browser test of the full flow.
+- For the riskiest check, I deliberately broke the code to confirm the test fails, then restored it.
+- I tested the **live site** directly: login, saving, conflicts, import, sharing, public links and blocked access.
+- I clicked through the app in a real browser with multiple accounts, including on a phone-sized screen.
