@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Live app** | https://ajaia-docs-one-omega.vercel.app |
-| **Walkthrough video** | https://www.loom.com/share/fbd08dd9e9c14186a6b6c92271dcc436 |
+| **Walkthrough video** | https://www.loom.com/share/769a823ce741430a916e137ee73f2b0f |
 | **Code (GitHub)** | https://github.com/vedanthirekar/ajaia-docs |
 
 **Quickest way to review:** on the login page, click a **demo account** (password `ajaia-demo-2026`). The three accounts already share documents with each other as editor, viewer, pending invite and public link. The README has the details.
