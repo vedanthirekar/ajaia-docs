@@ -161,3 +161,5 @@
   pointer-events: none;
   color: var(--muted-foreground);
 }
+.doc-content mark { background-color: #fef08a; color: inherit; padding: 0 0.1em; border-radius: 2px; }
+.dark .doc-content mark { background-color: #854d0e; }

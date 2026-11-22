@@ -13,7 +13,7 @@ A lightweight collaborative document editor: create and format documents, import
 | Area | Supported |
 |---|---|
 | **Documents** | Create, rename (click the title), edit, delete (owner only), and reopen. Autosaves about 1 s after you stop typing. |
-| **Formatting** | Bold, italic, underline, strikethrough, Heading 1–3, bulleted and numbered lists, undo/redo. Toolbar plus keyboard shortcuts (`Ctrl/⌘+B/I/U`), and Markdown shortcuts as you type (`# `, `- `, `1. `). |
+| **Formatting** | Bold, italic, underline, strikethrough, Heading 1–3, font size, text colour, highlight, links, text alignment (left/center/right/justify), bulleted and numbered lists, quotes, divider lines, undo/redo. Toolbar plus keyboard shortcuts (`Ctrl/⌘+B/I/U`), and Markdown shortcuts as you type (`# `, `- `, `1. `, `> `). Links accept http(s) and mailto only, and viewers can click them. |
 | **File import** | **Supported: `.txt`, `.md`, `.docx` (max 4 MB).** Each upload becomes a **new document**. Headings, bold, italic, lists and links are kept. Images, tables and complex Word styling are dropped. |
 | **Sharing** | The owner shares by email as **Viewer** (read-only) or **Editor** (edit and rename). Sharing with an email that has no account yet creates a **pending invite**: the doc shows up as soon as that person signs up. Roles can be changed or revoked at any time. |
 | **Dashboard** | "My documents" and "Shared with me" are listed separately, with role badges and owner names. |
@@ -74,7 +74,7 @@ To run against real Postgres (e.g. Neon) instead, set `DATABASE_URL=postgresql:/
 
 ### Tests
 
-- **Unit and integration (110 tests):** the permission matrix for every role and action, document CRUD with optimistic-concurrency conflicts, sharing (pending invites, email case-insensitivity, revoke and downgrade), signup and credentials, file import (txt/md/docx, UTF-16 files, binary/fake files), input validation, and the autosave state machine (debounce, edits during an in-flight save, unload flush, conflict/forbidden/signed-out/too-large states, retry backoff), and the open-redirect guard.
+- **Unit and integration (121 tests):** the permission matrix for every role and action, document CRUD with optimistic-concurrency conflicts, sharing (pending invites, email case-insensitivity, revoke and downgrade), signup and credentials, file import (txt/md/docx, UTF-16 files, binary/fake files), input validation, and the autosave state machine (debounce, edits during an in-flight save, unload flush, conflict/forbidden/signed-out/too-large states, retry backoff), and the open-redirect guard.
 - **E2E:** signs up user A, formats a doc, reloads to check persistence (including a reload ~250 ms after typing), shares it with B's email as a pending viewer, signs up B, and checks the doc is listed and read-only, plus that a write from B through the API returns 403.
 - The E2E test uses the locally installed **Google Chrome** by default. To use Playwright's bundled browser instead (e.g. in CI): `npx playwright install chromium` and set `PW_CHANNEL=chromium`. Run it against a deployment with `E2E_BASE_URL=https://… npm run test:e2e`.
 
@@ -97,6 +97,7 @@ To run against real Postgres (e.g. Neon) instead, set `DATABASE_URL=postgresql:/
 ## Known limitations and deliberate cuts
 
 - **No real-time co-editing.** Concurrent edits are detected (version check) rather than merged. The schema and editor (TipTap/ProseMirror) leave a direct path to Yjs later; see ARCHITECTURE.md.
+- **No page layout (pagination, page margins, headers/footers).** The free options are immature, and TipTap's official Pages add-on is paid (see D-017). The editor shows a fixed-width "page" instead.
 - No comments, suggestions, version history, images, tables, export or folders.
 - No password reset, email verification or share notification emails (each needs an email service).
 - **No email verification**, so a pending invite goes to whoever first registers that email address. That's fine for a demo; in production, verify emails before granting invite access.

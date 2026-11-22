@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { AppHeader } from "@/components/AppHeader";
 import { ShareDialog } from "@/components/share/ShareDialog";
 import type { DocContent } from "@/lib/db/schema";
-import { editorExtensions } from "@/lib/editor/extensions";
+import { buildEditorExtensions } from "@/lib/editor/extensions";
 import {
   canKeepalive,
   createSaveQueue,
@@ -61,7 +61,7 @@ export function DocumentEditor({ doc, user }: { doc: EditorDoc; user: { name: st
 
   const editor = useEditor({
     extensions: [
-      ...editorExtensions,
+      ...buildEditorExtensions({ editable: canEdit }),
       Placeholder.configure({ placeholder: canEdit ? "Start writing…" : "This document is empty." }),
     ],
     content: doc.content as JSONContent,

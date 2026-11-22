@@ -86,3 +86,9 @@ Format: **D-### · Date · Title**. Decision / Options / Rationale / Tradeoff.
 ### D-016 · 2026-11-21 · Import validates content, not MIME type
 - **Decision:** uploads are checked by extension plus actually decoding/parsing the content (BOM-aware text decoding that rejects binary data; mammoth for .docx). The browser-supplied MIME type is not trusted or required.
 - **Rationale:** browsers report inconsistent MIME types for `.md` (often empty or `application/octet-stream` on Windows), and the client controls that field anyway, so parsing is the stronger check. This deviates from the spec's "extension and MIME type" wording on purpose.
+
+### D-017 · 2026-11-21 · Richer formatting via free official extensions; no pagination
+- **Options considered:** TipTap Pages (official; pagination, page layouts) / community pagination extensions / swap to a paginated editor engine / free official formatting extensions.
+- **Decision:** add text alignment, highlight, text colour, font size, a link editor, quote and divider, all from MIT-licensed official TipTap packages. No pagination or page margins.
+- **Rationale:** TipTap Pages is a paid Pro add-on, and the brief forbids paid dependencies. Community pagination add-ons are early-stage, and pagination (splitting lists and tables across pages) is a big risk to editing reliability. The formatting extensions add real user value at almost no risk, because they're part of the same schema and covered by schema round-trip tests.
+- **Safety:** links are restricted to http, https and mailto, both in the link dialog (`normalizeLinkUrl`) and in TipTap's own parser. Read-only viewers can click links; editors click to place the cursor.
