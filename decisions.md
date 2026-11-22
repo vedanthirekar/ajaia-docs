@@ -1,88 +1,95 @@
 # Key decisions
 
-The seven decisions that shaped the product most: who each one was for, what I considered, and what I gave up.
+The seven choices that shaped the product most, and what each one means for the people using it.
 
 ---
 
-## 1. Go deep on "safe collaboration" instead of copying Google Docs
+## 1. Fewer features, done properly
 
-**The problem:** the brief is open-ended, and the timebox was 2–3 days. Trying to copy Google Docs would give a shallow app that breaks in the places users care about most.
+**The situation:** I had 2–3 days. Copying Google Docs feature by feature would have given a big app that breaks in the places people care about most.
 
-**Options:** real-time co-editing; comments and version history; or fewer features done properly.
+**What I chose:** to focus on the two things that hurt most when they go wrong: **losing your work** and **the wrong person seeing your document**. I left out live co-editing (seeing each other type), comments and version history.
 
-**Decision:** I focused on the things that hurt most when they go wrong: **losing work** and **the wrong person seeing a document**. Real-time co-editing was cut. Instead, every save carries a version number. If someone else saved first, you get a clear "changed elsewhere" message, with a way to copy your text, instead of silently overwriting their work.
+**What this means for users:**
+- Your work saves automatically about a second after you stop typing.
+- If someone else changed the document since you opened it, the app **warns you instead of overwriting their changes**. It offers a reload button and a "copy my text" button, so nothing is lost.
+- The trade-off: two people can't type in the same document at the same moment. They'll be warned, but their edits won't merge automatically.
 
-**Tradeoff:** two people can't type in the same doc at the same moment. But nobody ever loses work without being told, and the editor (TipTap) leaves a straightforward path to real-time later.
+## 2. Sharing you can trust
 
-## 2. Access rules live in one place on the server, and outsiders see "not found"
+**The situation:** a sharing feature is only useful if people believe it. If someone could open a document just by guessing its link, nobody would share anything sensitive.
 
-**The problem:** hiding a button in the UI isn't security. A sharing feature is only trustworthy if every request is checked.
+**What I chose:** every document has an **owner**, and the owner decides who gets in:
+- **Viewer:** can read only.
+- **Editor:** can read, edit and rename.
+- Only the owner can share or delete.
 
-**Decision:** one small module decides who can do what (owner / editor / viewer), and every API route and page goes through it. It's tested for every role and action combination. People without access get **"not found"** rather than "forbidden", so the app doesn't even reveal that a document exists. Only the owner can share or delete.
+These rules are checked by the server on every request, not just by hiding buttons on the screen. Someone without access sees **"Document not found"**, so they can't even tell the document exists.
 
-**Tradeoff:** a little more code than checking roles ad hoc in each route, but the rules are easy to read, review and test.
+**What this means for users:** you can share a roadmap with your manager as a viewer and with a teammate as an editor, and each sees exactly what they should.
 
-## 3. Share like people actually share: pending invites and public links
+## 3. Share the way people actually share
 
-**The problem:** in real teams you often share with someone who doesn't have an account yet, or you just want to send a read-only link.
+**The situation:** in real teams you often share with someone who hasn't joined yet, or you just want to send a link anyone can read.
 
-**Options for unknown emails:** reject with an error, or remember the invite.
+**What I chose:**
+- **Invite people before they sign up.** Share with any email address. The document shows as *Pending* and appears for that person as soon as they create an account.
+- **"Anyone with the link can view."** One switch turns a document into a read-only page anyone can open, even without an account. Switching it off removes that access immediately.
+- Making a document public never takes editing rights away from people you've added as editors.
 
-**Decision:**
-- **Pending invites:** sharing with an unregistered email is saved, and the doc appears for that person as soon as they sign up.
-- **"Anyone with the link can view":** the owner can turn this on. It works even for people who aren't signed in, and it's always read-only.
-- Explicit roles always win: making a doc public never downgrades an editor.
+**The trade-offs:**
+- The app doesn't send invite emails, because that needs a paid or verified email service. You send the link yourself with the **Copy link** button.
+- Accounts aren't email-verified, so whoever signs up first with an invited address gets the invite. Fine for a demo; a real product would verify emails.
 
-**Tradeoff:** there are no invite emails, because sending email needs a paid or verified email service. The owner copies the link from the Share dialog instead. And with no email verification, a pending invite goes to whoever first signs up with that address. That's acceptable for a demo, and documented.
+## 4. Easy for reviewers to try, free for everyone
 
-## 4. Choose the stack around a working deployment and easy review
+**The situation:** reviewers need a working link and a project that runs on their own machine without fuss, and they shouldn't have to pay for anything.
 
-**The problem:** reviewers need a live link and a project that runs locally without setup pain, and none of it should cost them money.
+**What I chose:**
+- **Hosting:** the live app runs on Vercel with a Postgres database (Neon), both on free plans.
+- **Running locally:** the project brings its own built-in database, so there's nothing to install. `npm install` then `npm run dev` and it works.
+- **Testing:** the automated tests use the same built-in database, so they check real behaviour rather than imitations. There are 143 of them.
+- **Ruled out:** a simpler file-based database, because the hosting platform can't keep a saved file between requests.
 
-**Options:** SQLite (simple, but Vercel can't keep a database file); a separate Express backend; Supabase (fast, but it hides the backend work being assessed); Next.js + Postgres.
+**What this means for reviewers:** a working live link, and a local setup that takes a couple of minutes.
 
-**Decision:**
-- Next.js with real API routes on Vercel, and **Postgres (Neon)**, all on free tiers.
-- Locally, the app uses an **embedded Postgres (PGlite)**, so a reviewer runs `npm install` and `npm run dev` with no database to install.
-- The tests use the same thing: 143 tests run real SQL against a fresh in-memory database, with no mocks.
+## 5. Real accounts, safely
 
-**Tradeoff:** two database drivers to support, one for production and one for local and tests, in exchange for zero-setup local runs and more trustworthy tests.
+**The situation:** fake "pick a user" logins are quicker to build, but real accounts make sharing believable and test it properly.
 
-## 5. Real login, without an account-takeover hole
+**What I chose:** proper sign-up and sign-in with email and password (passwords are stored securely hashed). Google sign-in is built too, ready to switch on later.
 
-**The problem:** mocked users are quick to build, but real accounts make sharing believable and test it properly.
+**A decision I reversed:** I'd planned that signing in with Google would automatically join an existing account with the same email. A review showed this was unsafe: someone could sign up with *your* email first, and then share your account once you signed in with Google. So the two stay separate, and the app tells you to use your password instead.
 
-**Options:** seeded fake users; Google only (reviewers would need two Google accounts); Google plus email/password.
+**The trade-off:** if you signed up with a password, you can't later switch to Google for the same email. Slightly less convenient, but no way for someone to take over your account.
 
-**Decision:** email/password, with Google sign-in built in. During the final review I **reversed one choice**: I'd planned to merge a Google login into an existing password account with the same email. But password signups aren't email-verified, so an attacker could register someone's address first and keep access once they later signed in with Google. Now these accounts are kept separate, and the user is told to sign in with their password.
+## 6. Bring your existing documents in
 
-**Tradeoff:** someone who signed up with a password can't switch to Google for the same email. A safe fix later is email verification.
+**The situation:** people already have notes and documents elsewhere. Starting from a blank page every time is a reason not to use a new tool.
 
-## 6. Make file import useful, and impossible to crash
+**What I chose:** upload a **`.txt`, `.md` (Markdown) or `.docx` (Word)** file of up to 4 MB, and it becomes a new, editable document.
+- Headings, lists and bold or italic text are kept.
+- Images and tables are dropped, and the upload button tells you what's supported.
 
-**The problem:** people already have documents in other formats. Uploading a file should give them an editable doc, not a bad experience.
+I also made sure it never fails badly:
+- Text files saved by Windows Notepad in "Unicode" import correctly.
+- Fake, empty or damaged files get a clear message instead of an error page.
+- A file too large to save afterwards is refused up front.
 
-**Decision:**
-- Import **`.txt`, `.md` or `.docx` as a new document**, converted into the editor's own format so it always opens correctly. Headings, lists and bold/italic are kept; images and tables are dropped, and the UI says so.
-- I check the actual file content rather than trusting its type label.
-- Windows "Unicode" text files are decoded correctly.
-- Fake or empty files get a clear error, never a crash.
-- A file that would be too big to *save* later is rejected up front.
+**The trade-off:** you can't insert a file into an existing document or attach files. One simple flow, done well.
 
-**Tradeoff:** no "insert into an existing document" option, and no attachments. Keeping it to one clear flow made it easy to do well.
+## 7. Built for the person reviewing it
 
-## 7. Design for the people reviewing it, not just the feature list
+**The situation:** a reviewer has a few minutes, not an afternoon. If they have to create two accounts just to see sharing, they may never see it.
 
-**The problem:** a reviewer has minutes, not hours. If they have to sign up twice to see sharing, they may never see it.
+**What I chose:**
+- **Three one-click demo accounts** (Maya, Leo and Priya) on the login page. Their documents are already shared with each other in every possible way: editor, viewer, pending invite, public link and private. Within a minute you can see the same document from the owner's, an editor's and a viewer's side.
+- **A one-command reset,** because anyone can edit the demo data. This puts everything back as it was.
+- **Visible polish:** a consistent visual design, a page that looks and prints like A4, and richer formatting (font sizes, colours, highlight, checklists).
+- **Nothing that costs reviewers money:** I skipped a paid page-layout add-on for that reason.
 
-**Decision:**
-- **Three demo accounts** with realistic, cross-shared documents. One click on the login page signs you in, and together they show every sharing mode: editor, viewer, pending invite, public link and private.
-- A script (`npm run seed:demo`) resets them to a clean state, because anyone can edit public demo data.
-- I also spent time on polish where it's visible: a consistent visual theme, an A4 page that prints properly, and extra formatting from free, official editor extensions.
-- I skipped a **paid** page-layout add-on, because the brief says reviewers shouldn't pay for anything.
-
-**Tradeoff:** the demo password is public. That's fine because the accounts hold only mock data, can't have their password changed, and can be reset with one command.
+**The trade-off:** the demo password is public. That's fine because the accounts hold only sample data, their passwords can't be changed, and everything resets with one command.
 
 ---
 
-*The full step-by-step design and plan the build followed are in `docs/superpowers/`.*
+*The full design document and build plan are in `docs/superpowers/`.*
