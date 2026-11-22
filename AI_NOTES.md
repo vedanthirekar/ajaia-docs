@@ -1,7 +1,5 @@
 # AI-native workflow note
 
-> _Draft generated from the build log. Personalize the first-person parts before submitting._
-
 ## Tools used
 
 - **Claude Code** (Claude Opus, in VS Code) as a pair-programmer for scoping, planning, implementation, tests and documentation.
@@ -32,6 +30,7 @@
 | `auth()` wrapper exported as the proxy | Didn't match Next 16's required export shape. Replaced with a cookie-presence redirect, and kept real checks server-side. |
 | Import limited only by file size | Gap found while writing tests: a 1.8 MB `.txt` would import but then exceed the 1 MB save limit, so the doc could never be saved. Added a converted-size check, and wrote a test that I watched fail first. |
 | My own "safe" calls, challenged by an independent AI code review | A fresh reviewer agent found four real issues I then fixed test-first: a tab-character open-redirect bypass (`/	/evil.com`), unsafe Google↔password account auto-linking (pre-account takeover), UTF-16/binary uploads causing a 500, and unload saves that silently failed for docs over 64 KiB. I also re-graded "401 retries forever" from minor to must-fix, because the user would keep typing into a doc that can't save. |
+| Client-side redirect after sign-in (`router.replace` + `router.refresh`) | **Production-only bug caught while taking screenshots:** the two calls raced on the live site, so sign-in left a blank `/login` page (0/8 attempts succeeded) even though every local test passed. Replaced with a full page navigation, verified 8/8 on production, and added a repeated sign-in step to the E2E test. Lesson: verify the deployed build, not just local. |
 | A test with an escaped backslash | A shell heredoc collapsed `\\` and the open-redirect test checked the wrong input. Caught because the test failed for the wrong reason. Fixed the test, not the code. |
 
 ## How I verified correctness, UX quality and reliability
@@ -39,6 +38,7 @@
 - **137 unit/integration tests** run real SQL against a fresh in-memory Postgres per test. No database mocks.
 - **Test-first:** every service and pure module had its test written and seen failing before the implementation.
 - **Mutation check on the riskiest E2E assertion:** I disabled the flush-on-pagehide code and confirmed the "reload right after typing" test fails, then restored it.
+- **Checks against the deployed site:** an HTTP smoke test of every flow (auth, save, stale-save 409, import, share, public link, viewer 403, anonymous 401) and a scripted sign-in loop.
 - **Manual end-to-end passes in a real browser** across two accounts: formatting round-trip, rename, conflict banner (simulated second tab), viewer read-only mode, editor rename allowed / delete forbidden, role downgrade, revoke → 404, self-share and duplicate-share errors, and 375 px mobile layout.
 - **API-level checks with curl:** status codes and error bodies for malformed JSON, bad IDs, unsupported files, stale versions and unauthorized access.
 - `tsc`, ESLint and a production `next build` run clean before each commit.

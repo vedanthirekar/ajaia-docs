@@ -22,6 +22,8 @@ A lightweight collaborative document editor: create and format documents, import
 | **Accounts** | Email and password signup, plus **Continue with Google**. |
 | **Safety** | If the same doc was saved from another tab or by another editor since you loaded it, your save is rejected and you're asked to reload (with a "copy my text" escape hatch) instead of silently overwriting. If your access is revoked while the doc is open, the editor locks. |
 
+**Screenshots:** [`docs/screenshots/`](docs/screenshots/) (login with demo accounts, dashboard, editor, share dialog, view-only and public-link views).
+
 ### Demo accounts (fastest way to review)
 
 The login page has **one-click demo accounts**. All use the password `ajaia-demo-2026`, and they hold mock data only.
@@ -93,7 +95,7 @@ To run against real Postgres (e.g. Neon) instead, set `DATABASE_URL=postgresql:/
 
 ### Tests
 
-- **Unit and integration (137 tests):** the permission matrix for every role and action, document CRUD with optimistic-concurrency conflicts, sharing (pending invites, email case-insensitivity, revoke and downgrade), signup and credentials, file import (txt/md/docx, UTF-16 files, binary/fake files), input validation, and the autosave state machine (debounce, edits during an in-flight save, unload flush, conflict/forbidden/signed-out/too-large states, retry backoff), and the open-redirect guard.
+- **Unit and integration (143 tests):** the permission matrix for every role and action, document CRUD with optimistic-concurrency conflicts, sharing (pending invites, email case-insensitivity, revoke and downgrade), signup and credentials, file import (txt/md/docx, UTF-16 files, binary/fake files), input validation, and the autosave state machine (debounce, edits during an in-flight save, unload flush, conflict/forbidden/signed-out/too-large states, retry backoff), and the open-redirect guard.
 - **E2E:** signs up user A, formats a doc, reloads to check persistence (including a reload ~250 ms after typing), shares it with B's email as a pending viewer, signs up B, and checks the doc is listed and read-only, plus that a write from B through the API returns 403. It also shares from the dashboard menu, makes the doc public and checks a signed-out visitor can read but not write it, turns that off again, and signs out via the account menu.
 - The E2E test uses the locally installed **Google Chrome** by default. To use Playwright's bundled browser instead (e.g. in CI): `npx playwright install chromium` and set `PW_CHANNEL=chromium`. Run it against a deployment with `E2E_BASE_URL=https://… npm run test:e2e`.
 
