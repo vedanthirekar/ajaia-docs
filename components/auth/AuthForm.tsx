@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiFetch, ApiError } from "@/lib/client/api";
+import { DEMO_ACCOUNTS, DEMO_PASSWORD } from "@/lib/demo";
 
 type Mode = "login" | "signup";
 
@@ -42,16 +43,20 @@ export function AuthForm({
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    await submit(email, password);
+  }
+
+  async function submit(emailValue: string, passwordValue: string) {
     setError(null);
     setPending(true);
     try {
       if (mode === "signup") {
         await apiFetch("/api/auth/signup", {
           method: "POST",
-          body: JSON.stringify({ name, email, password }),
+          body: JSON.stringify({ name, email: emailValue, password: passwordValue }),
         });
       }
-      const res = await signIn("credentials", { email, password, redirect: false });
+      const res = await signIn("credentials", { email: emailValue, password: passwordValue, redirect: false });
       if (!res || res.error) {
         setError(
           mode === "signup"
@@ -73,9 +78,9 @@ export function AuthForm({
   const altHref = `${isSignup ? "/login" : "/signup"}${callbackUrl !== "/" ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`;
 
   return (
-    <div className="w-full max-w-sm rounded-xl border bg-background p-6 shadow-sm sm:p-8">
+    <div className="w-full max-w-sm rounded-card border border-card-border bg-surface p-6 sm:p-8">
       <div className="mb-6 space-y-1 text-center">
-        <h1 className="text-xl font-semibold">{isSignup ? "Create your account" : "Sign in to Ajaia Docs"}</h1>
+        <h1 className="font-display text-2xl font-medium">{isSignup ? "Create your account" : "Sign in to Ajaia Docs"}</h1>
         <p className="text-sm text-muted-foreground">
           {isSignup ? "Start writing and sharing documents." : "Welcome back."}
         </p>
@@ -143,10 +148,51 @@ export function AuthForm({
           </p>
         )}
 
-        <Button type="submit" size="lg" className="w-full" disabled={pending}>
+        <Button type="submit" variant="primary" size="cta" className="w-full" disabled={pending}>
           {pending ? "Please wait…" : isSignup ? "Create account" : "Sign in"}
         </Button>
       </form>
+
+      {!isSignup && (
+        <section aria-labelledby="demo-heading" className="mt-6 rounded-xl bg-cream p-3">
+          <h2 id="demo-heading" className="text-xs font-semibold text-meta">
+            Try a demo account
+          </h2>
+          <p className="mt-0.5 text-xs text-meta">
+            Mock data, shared between all three. Password: <code className="font-mono text-ink">{DEMO_PASSWORD}</code>
+          </p>
+          <ul className="mt-2.5 space-y-1.5">
+            {DEMO_ACCOUNTS.map((a) => (
+              <li key={a.email}>
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={() => {
+                    setEmail(a.email);
+                    setPassword(DEMO_PASSWORD);
+                    void submit(a.email, DEMO_PASSWORD);
+                  }}
+                  className="flex w-full items-center gap-3 rounded-lg border border-card-border bg-surface px-2.5 py-2 text-left outline-none transition-colors hover:border-ink-2 focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-60"
+                  aria-label={`Sign in as ${a.name}, ${a.role}`}
+                >
+                  <span
+                    aria-hidden
+                    className={`flex size-8 shrink-0 items-center justify-center rounded-full border-[1.5px] border-ink text-[11px] font-semibold ${a.fill}`}
+                  >
+                    {a.name.split(" ").map((w) => w[0]).join("")}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[13px] font-medium">{a.name}</span>
+                    <span className="block truncate text-xs text-meta">
+                      {a.role} · {a.email}
+                    </span>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
         {isSignup ? "Already have an account? " : "New here? "}

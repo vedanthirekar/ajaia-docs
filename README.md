@@ -22,7 +22,23 @@ A lightweight collaborative document editor: create and format documents, import
 | **Accounts** | Email and password signup, plus **Continue with Google**. |
 | **Safety** | If the same doc was saved from another tab or by another editor since you loaded it, your save is rejected and you're asked to reload (with a "copy my text" escape hatch) instead of silently overwriting. If your access is revoked while the doc is open, the editor locks. |
 
-### Trying the sharing flow (reviewers)
+### Demo accounts (fastest way to review)
+
+The login page has **one-click demo accounts**. All use the password `ajaia-demo-2026`, and they hold mock data only.
+
+| Account | Role | What it shows |
+|---|---|---|
+| **Maya Chen** · `maya@demo.example` | Product lead | Owns *Q4 Product Roadmap* (Leo = editor, Priya = viewer), *Team Offsite — Lisbon* (**public link**, opens without signing in) and *Design Principles* (**imported** from a `.md` file). Has 3 docs shared *with* her. |
+| **Leo Martins** · `leo@demo.example` | Engineer | Owns *Editor Architecture Notes* (Maya = viewer) and *Sprint 14 Retro* (Maya and Priya = editors). Can edit Maya's roadmap. |
+| **Priya Patel** · `priya@demo.example` | Designer | Owns *Cotton Theme Style Guide* (Maya and Leo = viewers, plus a **pending** invite to someone who hasn't signed up) and a **private** draft. Can only *view* Maya's roadmap. |
+
+Reset the demo data at any time (recreates everything through the public API):
+
+```bash
+npm run seed:demo -- https://ajaia-docs-one-omega.vercel.app   # or omit the URL for localhost
+```
+
+### Trying the sharing flow yourself
 
 1. Sign up as user A, create a doc and write something.
 2. Click **Share**, enter a second email (e.g. `b@example.com`) and pick **Viewer**. It shows as *Pending*.

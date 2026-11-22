@@ -111,3 +111,8 @@ Format: **D-### · Date · Title**. Decision / Options / Rationale / Tradeoff.
 - **Small mockup items built:** filter tabs, Ctrl/⌘K search, Blank document tile, checklist (free official TipTap TaskList), More menu (Copy link, Print).
 - **Deliberate differences:** the import types hint stays visible (required by the brief); existing features kept (⋮ card menu, Public tag, font size/colour/alignment tools, A4 page size instead of the mockup's 780px page, pending-invite tag, account menu in the editor header).
 - **Left out:** live collaborator avatars and remote cursors (they need real-time presence; co-editing is deferred, D-007).
+
+### D-021 · 2026-11-21 · Public demo accounts with one-click sign-in
+- **Decision:** three seeded personas (Maya, Leo, Priya @`demo.example`, a reserved domain) with cross-shared mock documents covering every sharing mode: editor, viewer, pending invite, public link, private, imported. They appear as one-click buttons on the login page, and the password is published.
+- **Rationale:** reviewers (and the demo video) can see sharing from three sides in seconds, without signing up.
+- **Risk handling:** anyone can edit or delete the demo docs, so `npm run seed:demo` resets everything idempotently through the public API. There's no password-change feature, so the accounts can't be taken over. They hold mock data only.
